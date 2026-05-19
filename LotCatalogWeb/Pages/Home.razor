@@ -1,0 +1,300 @@
+@page "/"
+@inject HttpClient Http
+
+<PageTitle>Catalogue</PageTitle>
+
+<div class="catalogue-page">
+    <h2 class="page-title">Catalogue</h2>
+
+    <div class="filter-grid">
+        <div class="filter-item">
+            <select @bind="SelectedType">
+                <option value="">Select Type</option>
+                @foreach (var val in Types)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+        <div class="filter-item">
+            <select @bind="SelectedGender">
+                <option value="">Select Gender</option>
+                @foreach (var val in Genders)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+        <div class="filter-item">
+            <select @bind="SelectedGroup">
+                <option value="">Select Group</option>
+                @foreach (var val in Groups)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+        <div class="filter-item">
+            <select @bind="SelectedColor">
+                <option value="">Select Color</option>
+                @foreach (var val in Colors)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <select @bind="SelectedQuality">
+                <option value="">Select Quality</option>
+                @foreach (var val in Qualities)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+        <div class="filter-item">
+            <select @bind="SelectedClarity">
+                <option value="">Select Clarity</option>
+                @foreach (var val in Clarities)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+        <div class="filter-item">
+            <select @bind="SelectedSize">
+                <option value="">Select Size</option>
+                @foreach (var val in Sizes)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+        <div class="filter-item">
+            <select @bind="SelectedHairLength">
+                <option value="">Select Hair Length</option>
+                @foreach (var val in HairLengths)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <select @bind="SelectedDamage">
+                <option value="">Select Damage</option>
+                @foreach (var val in Damages)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="action-row">
+        <button class="btn-generate" @onclick="Generate" disabled="@IsLoading">
+            @if (IsLoading)
+            {
+                <span>Generating...</span>
+            }
+            else
+            {
+                <span>Generate</span>
+            }
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ResultMessage))
+    {
+        <div class="result-message @(IsError ? "error" : "success")">
+            @ResultMessage
+        </div>
+    }
+
+    @if (CatalogLots.Any())
+    {
+        <div class="results-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Lot #</th>
+                        <th>String #</th>
+                        <th>Type</th>
+                        <th>Gender</th>
+                        <th>Group</th>
+                        <th>Color</th>
+                        <th>Quality</th>
+                        <th>Clarity</th>
+                        <th>Size</th>
+                        <th>Hair Length</th>
+                        <th>Damage</th>
+                        <th>Skins</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var lot in CatalogLots)
+                    {
+                        <tr class="@(lot.IsShow ? "showlot-row" : "")">
+                            <td>@lot.LotNumber</td>
+                            <td>@lot.StringNumber</td>
+                            <td>@lot.SalesType</td>
+                            <td>@lot.Gender</td>
+                            <td>@lot.Group</td>
+                            <td>@lot.Color</td>
+                            <td>@lot.Quality</td>
+                            <td>@lot.Clarity</td>
+                            <td>@lot.Size</td>
+                            <td>@lot.HairLength</td>
+                            <td>@lot.Damages</td>
+                            <td>@lot.TotalSkins</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private string SelectedType = "";
+    private string SelectedGender = "";
+    private string SelectedGroup = "";
+    private string SelectedColor = "";
+    private string SelectedQuality = "";
+    private string SelectedClarity = "";
+    private string SelectedSize = "";
+    private string SelectedHairLength = "";
+    private string SelectedDamage = "";
+
+    private bool IsLoading;
+    private bool IsError;
+    private string ResultMessage = "";
+
+    private List<CatalogLotRow> CatalogLots = new();
+
+    private List<string> Types = new();
+    private List<string> Genders = new();
+    private List<string> Groups = new();
+    private List<string> Colors = new();
+    private List<string> Qualities = new();
+    private List<string> Clarities = new();
+    private List<string> Sizes = new();
+    private List<string> HairLengths = new();
+    private List<string> Damages = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var filters = await Http.GetFromJsonAsync<FilterOptions>("api/filters");
+            if (filters != null)
+            {
+                Types = filters.Types ?? new();
+                Genders = filters.Genders ?? new();
+                Groups = filters.Groups ?? new();
+                Colors = filters.Colors ?? new();
+                Qualities = filters.Qualities ?? new();
+                Clarities = filters.Clarities ?? new();
+                Sizes = filters.Sizes ?? new();
+                HairLengths = filters.HairLengths ?? new();
+                Damages = filters.Damages ?? new();
+            }
+        }
+        catch
+        {
+            // API not available yet — filters will be empty
+        }
+    }
+
+    private async Task Generate()
+    {
+        IsLoading = true;
+        IsError = false;
+        ResultMessage = "";
+        CatalogLots.Clear();
+
+        try
+        {
+            var query = BuildQueryString();
+            var response = await Http.PostAsync($"api/generate?{query}", null);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                ResultMessage = content;
+
+                try
+                {
+                    var lots = await Http.GetFromJsonAsync<List<CatalogLotRow>>(
+                        $"api/catalog-lots?{query}");
+                    if (lots != null)
+                        CatalogLots = lots;
+                }
+                catch
+                {
+                    // Catalog lots endpoint not available
+                }
+            }
+            else
+            {
+                IsError = true;
+                ResultMessage = $"Error: {content}";
+            }
+        }
+        catch (Exception ex)
+        {
+            IsError = true;
+            ResultMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private string BuildQueryString()
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrEmpty(SelectedType)) parts.Add($"type={Uri.EscapeDataString(SelectedType)}");
+        if (!string.IsNullOrEmpty(SelectedGender)) parts.Add($"gender={Uri.EscapeDataString(SelectedGender)}");
+        if (!string.IsNullOrEmpty(SelectedGroup)) parts.Add($"group={Uri.EscapeDataString(SelectedGroup)}");
+        if (!string.IsNullOrEmpty(SelectedColor)) parts.Add($"color={Uri.EscapeDataString(SelectedColor)}");
+        if (!string.IsNullOrEmpty(SelectedQuality)) parts.Add($"quality={Uri.EscapeDataString(SelectedQuality)}");
+        if (!string.IsNullOrEmpty(SelectedClarity)) parts.Add($"clarity={Uri.EscapeDataString(SelectedClarity)}");
+        if (!string.IsNullOrEmpty(SelectedSize)) parts.Add($"size={Uri.EscapeDataString(SelectedSize)}");
+        if (!string.IsNullOrEmpty(SelectedHairLength)) parts.Add($"hairLength={Uri.EscapeDataString(SelectedHairLength)}");
+        if (!string.IsNullOrEmpty(SelectedDamage)) parts.Add($"damage={Uri.EscapeDataString(SelectedDamage)}");
+        return string.Join("&", parts);
+    }
+
+    public class FilterOptions
+    {
+        public List<string>? Types { get; set; }
+        public List<string>? Genders { get; set; }
+        public List<string>? Groups { get; set; }
+        public List<string>? Colors { get; set; }
+        public List<string>? Qualities { get; set; }
+        public List<string>? Clarities { get; set; }
+        public List<string>? Sizes { get; set; }
+        public List<string>? HairLengths { get; set; }
+        public List<string>? Damages { get; set; }
+    }
+
+    public class CatalogLotRow
+    {
+        public int LotNumber { get; set; }
+        public int StringNumber { get; set; }
+        public string SalesType { get; set; } = "";
+        public string Gender { get; set; } = "";
+        public string Group { get; set; } = "";
+        public string Color { get; set; } = "";
+        public string Quality { get; set; } = "";
+        public string Clarity { get; set; } = "";
+        public string Size { get; set; } = "";
+        public string HairLength { get; set; } = "";
+        public string Damages { get; set; } = "";
+        public int TotalSkins { get; set; }
+        public bool IsShow { get; set; }
+    }
+}
