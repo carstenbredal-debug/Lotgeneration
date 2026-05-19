@@ -7,13 +7,15 @@ namespace LotCatalogFunction.Services
 {
     public class CatalogBuildService
     {
-        public List<CatalogLot> BuildCatalogLots(
+        public CatalogBuildResult BuildCatalogLots(
             IEnumerable<GeneratedLot> lots,
             IEnumerable<StringDefinition> stringDefinitions,
             IEnumerable<LotGroupOrderFunction> groupOrders,
             IEnumerable<LotSortOrder> sortOrders,
-            IEnumerable<CatalogNumberRule> catalogNumberRules)
+            IEnumerable<CatalogNumberRule> catalogNumberRules,
+            Guid runId)
         {
+            var result = new CatalogBuildResult();
             var lotList = lots.ToList();
 
             var stringColumns = stringDefinitions
@@ -57,7 +59,6 @@ namespace LotCatalogFunction.Services
                 StringComparer.OrdinalIgnoreCase
             );
 
-            var catalogLots = new List<CatalogLot>();
             var catalogSortOrder = 1;
 
             foreach (var catalogString in sortedStrings)
@@ -72,9 +73,29 @@ namespace LotCatalogFunction.Services
 
                 if (!ruleMap.TryGetValue(ruleKey, out var prefix))
                 {
-                    throw new InvalidOperationException(
-                        $"Missing dbo.CatalogNumberRule for {ruleKey}"
-                    );
+                    foreach (var lot in catalogString.Lots)
+                    {
+                        result.SkippedGroups.Add(new SkippedGroup
+                        {
+                            RunID = runId,
+                            Reason = "Missing CatalogNumberRule: " + ruleKey,
+                            SalesType = lot.SalesType,
+                            Group = lot.Group,
+                            Gender = lot.Gender,
+                            Size = lot.Size,
+                            Color = lot.Color,
+                            Quality = lot.Quality,
+                            Clarity = lot.Clarity,
+                            HairLength = lot.HairLength,
+                            Damages = lot.Damages,
+                            BoxCount = lot.BoxCount,
+                            ShowlotCount = lot.IsShow == "Yes" ? 1 : 0,
+                            TotalSkins = lot.TotalSkins,
+                            BoxNumbers = lot.IncludedBoxNumbers
+                        });
+                    }
+
+                    continue;
                 }
 
                 if (!nextNumberByRule.ContainsKey(ruleKey))
@@ -95,7 +116,7 @@ namespace LotCatalogFunction.Services
                 {
                     var lotNumber = nextNumberByRule[ruleKey];
 
-                    catalogLots.Add(new CatalogLot
+                    result.CatalogLots.Add(new CatalogLot
                     {
                         LotUniqueID = lot.UniqueID,
 
@@ -124,7 +145,7 @@ namespace LotCatalogFunction.Services
                 }
             }
 
-            return catalogLots;
+            return result;
         }
 
         private static List<CatalogStringGroup> SortStrings(
