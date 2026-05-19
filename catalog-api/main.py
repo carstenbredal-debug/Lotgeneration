@@ -11,7 +11,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor, black, white
 from reportlab.platypus import (
-    SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak,
+    KeepTogether,
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
@@ -329,13 +330,29 @@ async def generate_pdf(
 
             elements.append(Paragraph(sec_title, section_style))
 
-            table_data = [
+            # Column header row as its own table
+            grey_bg = HexColor("#E8E8E8")
+            header_data = [
                 [Paragraph("<b>Lots</b>", header_style),
                  Paragraph("<b>Skins</b>", header_style),
                  Paragraph("<b>Description</b>", header_style),
                  Paragraph("<b>Price</b>", header_style),
                  Paragraph("<b>Comments</b>", header_style)]
             ]
+            ht = Table(header_data, colWidths=col_widths)
+            ht.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), grey_bg),
+                ("TEXTCOLOR", (0, 0), (-1, 0), black),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("GRID", (0, 0), (-1, -1), 0.5, HexColor("#CCCCCC")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ]))
+            elements.append(ht)
 
             # Group rows by StringNumber within section
             string_groups = {}
@@ -343,15 +360,17 @@ async def generate_pdf(
                 sn = r.get("StringNumber", 0)
                 string_groups.setdefault(sn, []).append(r)
 
+            # Each string group as its own table (KeepTogether for multi-lot)
+            light_grey = HexColor("#F5F5F5")
             for sn, string_rows in string_groups.items():
                 is_multi = len(string_rows) > 1
+                sg_data = []
                 for idx, r in enumerate(string_rows):
                     seq = idx + 1
                     is_first = (seq == 1)
                     is_last = (seq == len(string_rows))
                     skins = f"{r['TotalSkins']:,}" if r.get("TotalSkins") else ""
 
-                    # Description logic matching PDFBuildFunction
                     if not is_multi:
                         desc = _build_description(r)
                     elif is_first:
@@ -362,7 +381,7 @@ async def generate_pdf(
                     else:
                         desc = str(seq)
 
-                    table_data.append([
+                    sg_data.append([
                         Paragraph(str(r.get("LotNumber", "")), cell_style),
                         Paragraph(skins, cell_style),
                         Paragraph(desc, cell_style),
@@ -370,42 +389,31 @@ async def generate_pdf(
                         Paragraph("", cell_style),
                     ])
 
-            t = Table(table_data, colWidths=col_widths, repeatRows=1)
-            grey_bg = HexColor("#E8E8E8")
-            light_grey = HexColor("#F5F5F5")
-            style_cmds = [
-                ("BACKGROUND", (0, 0), (-1, 0), grey_bg),
-                ("TEXTCOLOR", (0, 0), (-1, 0), black),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8),
-                ("GRID", (0, 0), (-1, -1), 0.5, HexColor("#CCCCCC")),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [white, light_grey]),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 4),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-            ]
+                st = Table(sg_data, colWidths=col_widths)
+                style_cmds = [
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                    ("GRID", (0, 0), (-1, -1), 0.5, HexColor("#CCCCCC")),
+                    ("ROWBACKGROUNDS", (0, 0), (-1, -1), [white, light_grey]),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ]
 
-            # Add thick borders around multi-lot strings
-            row_idx = 1  # start after header row
-            for sn, string_rows in string_groups.items():
-                count = len(string_rows)
-                if count > 1:
-                    first_row = row_idx
-                    last_row = row_idx + count - 1
-                    # Top border on first row of string
-                    style_cmds.append(("LINEABOVE", (0, first_row), (3, first_row), 1.25, black))
-                    # Bottom border on last row of string
+                if is_multi:
+                    last_row = len(sg_data) - 1
+                    style_cmds.append(("LINEABOVE", (0, 0), (3, 0), 1.25, black))
                     style_cmds.append(("LINEBELOW", (0, last_row), (3, last_row), 1.25, black))
-                    # Left border on all rows (first 4 cols)
-                    style_cmds.append(("LINEBEFORE", (0, first_row), (0, last_row), 1.25, black))
-                    # Right border on price column (col 3)
-                    style_cmds.append(("LINEAFTER", (3, first_row), (3, last_row), 1.25, black))
-                row_idx += count
+                    style_cmds.append(("LINEBEFORE", (0, 0), (0, last_row), 1.25, black))
+                    style_cmds.append(("LINEAFTER", (3, 0), (3, last_row), 1.25, black))
 
-            t.setStyle(TableStyle(style_cmds))
-            elements.append(t)
+                st.setStyle(TableStyle(style_cmds))
+
+                if is_multi:
+                    elements.append(KeepTogether([st]))
+                else:
+                    elements.append(st)
 
         doc.build(elements)
 
