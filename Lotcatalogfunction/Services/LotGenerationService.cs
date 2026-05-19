@@ -19,7 +19,7 @@ namespace LotCatalogFunction.Services
             var activeBoxes = boxes.ToList();
             var sortOrderList = sortOrders.ToList();
 
-            ValidateSortMappings(activeBoxes, sortOrderList);
+            var missingSortKeys = FindMissingSortMappings(activeBoxes, sortOrderList);
 
             var orderedColumns = groupOrders
                 .OrderBy(x => x.GroupOrder)
@@ -46,6 +46,26 @@ namespace LotCatalogFunction.Services
                 var showlots = groupBoxes
                     .Where(x => x.BoxType == "Showlot")
                     .ToList();
+
+                var groupMissingSortKeys = groupBoxes
+                    .SelectMany(box => GetMissingSortKeysForBox(box, missingSortKeys))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (groupMissingSortKeys.Any())
+                {
+                    result.SkippedGroups.Add(
+                        CreateSkippedGroup(
+                            runId,
+                            "Missing LotSortOrder: " + string.Join(", ", groupMissingSortKeys),
+                            representative,
+                            groupBoxes,
+                            showlots.Count
+                        )
+                    );
+
+                    continue;
+                }
 
                 if (showlots.Count == 0)
                 {
@@ -187,7 +207,7 @@ namespace LotCatalogFunction.Services
                 .ToList();
         }
 
-        private static void ValidateSortMappings(
+        private static HashSet<string> FindMissingSortMappings(
             IEnumerable<BoxRow> boxes,
             IEnumerable<LotSortOrder> sortOrders)
         {
@@ -195,7 +215,7 @@ namespace LotCatalogFunction.Services
                 .Select(x => BuildSortKey(x.ColumnName, x.Value))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            var missing = new List<string>();
+            var missing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var box in boxes)
             {
@@ -210,19 +230,7 @@ namespace LotCatalogFunction.Services
                 CheckValue("Damages", box.Damages);
             }
 
-            if (missing.Any())
-            {
-                throw new InvalidOperationException(
-                    "Missing dbo.LotSortOrder mappings:" +
-                    Environment.NewLine +
-                    string.Join(
-                        Environment.NewLine,
-                        missing
-                            .Distinct(StringComparer.OrdinalIgnoreCase)
-                            .OrderBy(x => x)
-                    )
-                );
-            }
+            return missing;
 
             void CheckValue(string columnName, string value)
             {
@@ -230,6 +238,33 @@ namespace LotCatalogFunction.Services
 
                 if (!lookup.Contains(key))
                     missing.Add(key);
+            }
+        }
+
+        private static List<string> GetMissingSortKeysForBox(
+            BoxRow box,
+            HashSet<string> missingSortKeys)
+        {
+            var result = new List<string>();
+
+            CheckValue("SalesType", box.SalesType);
+            CheckValue("Gender", box.Gender);
+            CheckValue("Group", box.Group);
+            CheckValue("HairLength", box.HairLength);
+            CheckValue(GetSizeColumnName(box), box.Size);
+            CheckValue("Quality", box.Quality);
+            CheckValue("Color", box.Color);
+            CheckValue("Clarity", box.Clarity);
+            CheckValue("Damages", box.Damages);
+
+            return result;
+
+            void CheckValue(string columnName, string value)
+            {
+                var key = BuildSortKey(columnName, value);
+
+                if (missingSortKeys.Contains(key))
+                    result.Add(key);
             }
         }
 
