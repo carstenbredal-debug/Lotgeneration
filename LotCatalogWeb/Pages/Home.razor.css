@@ -156,7 +156,11 @@
     background-color: #fef9e7;
 }
 
-/* Multi-lot string grouping borders */
+/* Multi-lot string grouping */
+::deep .string-row {
+    background-color: #fef9e7;
+}
+
 ::deep .string-row td {
     border-left-color: #ddd;
     border-right-color: #ddd;
