@@ -1,4 +1,5 @@
-﻿using LotCatalogFunction.Models;
+using LotCatalogFunction.Models;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,13 @@ namespace LotCatalogFunction.Services
 {
     public class LotGenerationService
     {
+        private readonly ILogger<LotGenerationService> _logger;
+
+        public LotGenerationService(ILogger<LotGenerationService> logger)
+        {
+            _logger = logger;
+        }
+
         public LotGenerationResult GenerateLots(
             IEnumerable<BoxRow> boxes,
             IEnumerable<LotSizeRule> rules,
@@ -26,16 +34,10 @@ namespace LotCatalogFunction.Services
                 .Select(x => x.ColumnName)
                 .ToList();
 
-            var sortMap = sortOrderList
-                .GroupBy(x => BuildSortKey(x.ColumnName, x.Value))
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.First().SortOrder,
-                    StringComparer.OrdinalIgnoreCase
-                );
+            var sortMap = LotPropertyHelper.BuildSortMap(sortOrderList);
 
             var groups = activeBoxes.GroupBy(box =>
-                string.Join("|", orderedColumns.Select(col => GetGroupValue(box, col)))
+                string.Join("|", orderedColumns.Select(col => GetBoxValue(box, col)))
             );
 
             foreach (var group in groups)
@@ -54,6 +56,10 @@ namespace LotCatalogFunction.Services
 
                 if (groupMissingSortKeys.Any())
                 {
+                    _logger.LogWarning(
+                        "Skipping group: Missing LotSortOrder for {Keys}",
+                        string.Join(", ", groupMissingSortKeys));
+
                     result.SkippedGroups.Add(
                         CreateSkippedGroup(
                             runId,
@@ -69,6 +75,9 @@ namespace LotCatalogFunction.Services
 
                 if (showlots.Count == 0)
                 {
+                    _logger.LogWarning("Skipping group: Missing showlot for {SalesType}/{Gender}/{Group}",
+                        representative.SalesType, representative.Gender, representative.Group);
+
                     result.SkippedGroups.Add(
                         CreateSkippedGroup(runId, "Missing showlot", representative, groupBoxes, showlots.Count)
                     );
@@ -78,6 +87,9 @@ namespace LotCatalogFunction.Services
 
                 if (showlots.Count > 1)
                 {
+                    _logger.LogWarning("Skipping group: Multiple showlots ({Count}) for {SalesType}/{Gender}/{Group}",
+                        showlots.Count, representative.SalesType, representative.Gender, representative.Group);
+
                     result.SkippedGroups.Add(
                         CreateSkippedGroup(runId, "Multiple showlots", representative, groupBoxes, showlots.Count)
                     );
@@ -93,6 +105,9 @@ namespace LotCatalogFunction.Services
 
                 if (rule == null)
                 {
+                    _logger.LogWarning("Skipping group: Missing size rule for {Gender}/{Size}",
+                        representative.Gender, representative.Size);
+
                     result.SkippedGroups.Add(
                         CreateSkippedGroup(runId, "Missing size rule", representative, groupBoxes, showlots.Count)
                     );
@@ -108,62 +123,59 @@ namespace LotCatalogFunction.Services
                     sortMap
                 );
 
-                var firstLotBoxes = new List<BoxRow>
-                {
-                    showlot
-                };
+                var firstLotBoxes = new List<BoxRow> { showlot };
+                var storageBoxCount = 0;
+                var currentSkins = showlot.Skins;
+                var consumed = new HashSet<int>();
 
-                foreach (var box in storageBoxes.ToList())
+                for (var i = 0; i < storageBoxes.Count; i++)
                 {
-                    var storageBoxCount = firstLotBoxes.Count(x => x.BoxType != "Showlot");
+                    var box = storageBoxes[i];
                     var potentialBoxes = storageBoxCount + 1;
-                    var potentialSkins = firstLotBoxes.Sum(x => x.Skins) + box.Skins;
+                    var potentialSkins = currentSkins + box.Skins;
 
-                    if (
-                        potentialBoxes <= rule.MaxBoxes
-                        &&
-                        potentialSkins <= rule.MaxLotSizeInclShowlot
-                    )
+                    if (potentialBoxes <= rule.MaxBoxes
+                        && potentialSkins <= rule.MaxLotSizeInclShowlot)
                     {
                         firstLotBoxes.Add(box);
-                        storageBoxes.Remove(box);
+                        consumed.Add(i);
+                        storageBoxCount++;
+                        currentSkins = potentialSkins;
                     }
 
-                    if (potentialBoxes >= rule.MaxBoxes)
+                    if (storageBoxCount >= rule.MaxBoxes)
                         break;
                 }
+
+                var remainingBoxes = storageBoxes
+                    .Where((_, i) => !consumed.Contains(i))
+                    .ToList();
 
                 result.Lots.Add(
                     CreateLot(firstLotBoxes, "Yes", showlot.BoxNumber)
                 );
 
-                while (storageBoxes.Any())
+                var startIndex = 0;
+
+                while (startIndex < remainingBoxes.Count)
                 {
                     var lotBoxes = new List<BoxRow>();
+                    var lotSkins = 0;
 
-                    foreach (var box in storageBoxes.ToList())
+                    while (startIndex < remainingBoxes.Count
+                        && lotBoxes.Count < rule.MaxBoxes
+                        && lotSkins + remainingBoxes[startIndex].Skins <= rule.MaxLotSizeExclShowlot)
                     {
-                        var potentialBoxes = lotBoxes.Count + 1;
-                        var potentialSkins = lotBoxes.Sum(x => x.Skins) + box.Skins;
-
-                        if (
-                            potentialBoxes <= rule.MaxBoxes
-                            &&
-                            potentialSkins <= rule.MaxLotSizeExclShowlot
-                        )
-                        {
-                            lotBoxes.Add(box);
-                            storageBoxes.Remove(box);
-                        }
-
-                        if (lotBoxes.Count >= rule.MaxBoxes)
-                            break;
+                        var box = remainingBoxes[startIndex];
+                        lotBoxes.Add(box);
+                        lotSkins += box.Skins;
+                        startIndex++;
                     }
 
-                    if (!lotBoxes.Any())
+                    if (!lotBoxes.Any() && startIndex < remainingBoxes.Count)
                     {
-                        lotBoxes.Add(storageBoxes.First());
-                        storageBoxes.RemoveAt(0);
+                        lotBoxes.Add(remainingBoxes[startIndex]);
+                        startIndex++;
                     }
 
                     result.Lots.Add(
@@ -171,6 +183,9 @@ namespace LotCatalogFunction.Services
                     );
                 }
             }
+
+            _logger.LogInformation("Lot generation complete: {LotCount} lots, {SkippedCount} skipped groups",
+                result.Lots.Count, result.SkippedGroups.Count);
 
             return result;
         }
@@ -180,7 +195,7 @@ namespace LotCatalogFunction.Services
             List<string> orderedColumns,
             IReadOnlyDictionary<string, int> sortMap)
         {
-            IOrderedEnumerable<BoxRow>? orderedBoxes = null;
+            IOrderedEnumerable<BoxRow> orderedBoxes = null;
 
             foreach (var columnName in orderedColumns)
             {
@@ -188,12 +203,12 @@ namespace LotCatalogFunction.Services
                 {
                     var effectiveColumnName =
                         columnName == "Size"
-                            ? GetSizeColumnName(box)
+                            ? LotPropertyHelper.GetSizeColumnName(box.Gender)
                             : columnName;
 
-                    var value = GetGroupValue(box, columnName);
+                    var value = GetBoxValue(box, columnName);
 
-                    return GetSortRank(sortMap, effectiveColumnName, value);
+                    return LotPropertyHelper.GetSortRank(sortMap, effectiveColumnName, value);
                 };
 
                 orderedBoxes = orderedBoxes == null
@@ -212,7 +227,7 @@ namespace LotCatalogFunction.Services
             IEnumerable<LotSortOrder> sortOrders)
         {
             var lookup = sortOrders
-                .Select(x => BuildSortKey(x.ColumnName, x.Value))
+                .Select(x => LotPropertyHelper.BuildSortKey(x.ColumnName, x.Value))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             var missing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -223,7 +238,7 @@ namespace LotCatalogFunction.Services
                 CheckValue("Gender", box.Gender);
                 CheckValue("Group", box.Group);
                 CheckValue("HairLength", box.HairLength);
-                CheckValue(GetSizeColumnName(box), box.Size);
+                CheckValue(LotPropertyHelper.GetSizeColumnName(box.Gender), box.Size);
                 CheckValue("Quality", box.Quality);
                 CheckValue("Color", box.Color);
                 CheckValue("Clarity", box.Clarity);
@@ -234,7 +249,7 @@ namespace LotCatalogFunction.Services
 
             void CheckValue(string columnName, string value)
             {
-                var key = BuildSortKey(columnName, value);
+                var key = LotPropertyHelper.BuildSortKey(columnName, value);
 
                 if (!lookup.Contains(key))
                     missing.Add(key);
@@ -251,7 +266,7 @@ namespace LotCatalogFunction.Services
             CheckValue("Gender", box.Gender);
             CheckValue("Group", box.Group);
             CheckValue("HairLength", box.HairLength);
-            CheckValue(GetSizeColumnName(box), box.Size);
+            CheckValue(LotPropertyHelper.GetSizeColumnName(box.Gender), box.Size);
             CheckValue("Quality", box.Quality);
             CheckValue("Color", box.Color);
             CheckValue("Clarity", box.Clarity);
@@ -261,58 +276,20 @@ namespace LotCatalogFunction.Services
 
             void CheckValue(string columnName, string value)
             {
-                var key = BuildSortKey(columnName, value);
+                var key = LotPropertyHelper.BuildSortKey(columnName, value);
 
                 if (missingSortKeys.Contains(key))
                     result.Add(key);
             }
         }
 
-        private static string GetGroupValue(BoxRow box, string columnName)
+        private static string GetBoxValue(BoxRow box, string columnName)
         {
-            return columnName switch
-            {
-                "SalesType" => box.SalesType ?? "",
-                "Gender" => box.Gender ?? "",
-                "Group" => box.Group ?? "",
-                "HairLength" => box.HairLength ?? "",
-                "Size" => box.Size ?? "",
-                "Quality" => box.Quality ?? "",
-                "Color" => box.Color ?? "",
-                "Clarity" => box.Clarity ?? "",
-                "Damages" => box.Damages ?? "",
-
-                _ => throw new InvalidOperationException(
-                    $"Unknown lot group order column: {columnName}"
-                )
-            };
-        }
-
-        private static int GetSortRank(
-            IReadOnlyDictionary<string, int> sortMap,
-            string columnName,
-            string value)
-        {
-            var key = BuildSortKey(columnName, value);
-
-            return sortMap.TryGetValue(key, out var sortOrder)
-                ? sortOrder
-                : int.MaxValue;
-        }
-
-        private static string BuildSortKey(string columnName, string value)
-        {
-            return $"{columnName?.Trim() ?? ""}|{value?.Trim() ?? ""}";
-        }
-
-        private static string GetSizeColumnName(BoxRow box)
-        {
-            return box.Gender switch
-            {
-                "Females" => "Size_Females",
-                "Males" => "Size_Males",
-                _ => "Size"
-            };
+            return LotPropertyHelper.GetPropertyValue(
+                columnName,
+                box.SalesType, box.Gender, box.Group,
+                box.HairLength, box.Size, box.Quality,
+                box.Color, box.Clarity, box.Damages);
         }
 
         private static LotSizeRule FindRule(

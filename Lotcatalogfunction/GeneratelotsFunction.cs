@@ -1,6 +1,7 @@
-﻿using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using Dapper;
 using LotCatalogFunction.Models;
 using LotCatalogFunction.Services;
@@ -13,6 +14,20 @@ namespace LotCatalogFunction
 {
     public class GenerateLotsFunction
     {
+        private readonly LotGenerationService _lotGenerationService;
+        private readonly CatalogBuildService _catalogBuildService;
+        private readonly ILogger<GenerateLotsFunction> _logger;
+
+        public GenerateLotsFunction(
+            LotGenerationService lotGenerationService,
+            CatalogBuildService catalogBuildService,
+            ILogger<GenerateLotsFunction> logger)
+        {
+            _lotGenerationService = lotGenerationService;
+            _catalogBuildService = catalogBuildService;
+            _logger = logger;
+        }
+
         [Function("GenerateLots")]
         public async Task<HttpResponseData> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post")]
@@ -20,12 +35,11 @@ namespace LotCatalogFunction
         {
             try
             {
-                string connectionString =
-                    Environment.GetEnvironmentVariable("IFTTEST")
-                    ?? Environment.GetEnvironmentVariable("SQLCONNSTR_IFTTEST");
+                var connectionString = ConnectionHelper.GetConnectionString();
 
                 if (string.IsNullOrWhiteSpace(connectionString))
                 {
+                    _logger.LogError("Connection string missing.");
                     var response = req.CreateResponse(HttpStatusCode.InternalServerError);
                     await response.WriteStringAsync("Connection string missing.");
                     return response;
@@ -33,6 +47,8 @@ namespace LotCatalogFunction
 
                 using var connection = new SqlConnection(connectionString);
                 await connection.OpenAsync();
+
+                _logger.LogInformation("Loading data from database...");
 
                 var boxes = await connection.QueryAsync<BoxRow>(@"
                     SELECT
@@ -106,9 +122,9 @@ namespace LotCatalogFunction
                     WHERE IsActive = 1;
                 ");
 
-                var lotGenerationService = new LotGenerationService();
+                _logger.LogInformation("Generating lots...");
 
-                var generationResult = lotGenerationService.GenerateLots(
+                var generationResult = _lotGenerationService.GenerateLots(
                     boxes,
                     rules,
                     groupOrders,
@@ -118,9 +134,9 @@ namespace LotCatalogFunction
                 var lots = generationResult.Lots;
                 var skippedGroups = generationResult.SkippedGroups;
 
-                var catalogBuildService = new CatalogBuildService();
+                _logger.LogInformation("Building catalog...");
 
-                var catalogBuildResult = catalogBuildService.BuildCatalogLots(
+                var catalogBuildResult = _catalogBuildService.BuildCatalogLots(
                     lots,
                     stringDefinitions,
                     groupOrders,
@@ -131,6 +147,8 @@ namespace LotCatalogFunction
 
                 var catalogLots = catalogBuildResult.CatalogLots;
                 skippedGroups.AddRange(catalogBuildResult.SkippedGroups);
+
+                _logger.LogInformation("Writing results to database...");
 
                 using var transaction = connection.BeginTransaction();
 
@@ -281,18 +299,21 @@ namespace LotCatalogFunction
 
                 transaction.Commit();
 
-                var ok = req.CreateResponse(HttpStatusCode.OK);
-
-                await ok.WriteStringAsync(
+                var summary =
                     $"Generated lots: {lots.Count}. " +
                     $"Catalog lots: {catalogLots.Count}. " +
-                    $"Skipped groups: {skippedGroups.Count}."
-                );
+                    $"Skipped groups: {skippedGroups.Count}.";
+
+                _logger.LogInformation(summary);
+
+                var ok = req.CreateResponse(HttpStatusCode.OK);
+                await ok.WriteStringAsync(summary);
 
                 return ok;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GenerateLots");
                 var response = req.CreateResponse(HttpStatusCode.InternalServerError);
                 await response.WriteStringAsync(ex.ToString());
                 return response;
