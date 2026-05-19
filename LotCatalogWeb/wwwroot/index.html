@@ -27,6 +27,23 @@
         <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        window.downloadFile = async function (url, filename) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || 'PDF generation failed');
+            }
+            const blob = await response.blob();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        };
+    </script>
 </body>
 
 </html>

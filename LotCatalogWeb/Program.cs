@@ -6,6 +6,8 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+var baseUri = new Uri(builder.HostEnvironment.BaseAddress);
+var cleanBase = new UriBuilder(baseUri) { UserName = "", Password = "" }.Uri;
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = cleanBase });
 
 await builder.Build().RunAsync();

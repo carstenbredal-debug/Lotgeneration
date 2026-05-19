@@ -1,5 +1,6 @@
 @page "/"
 @inject HttpClient Http
+@inject IJSRuntime JS
 
 <PageTitle>Catalogue</PageTitle>
 
@@ -103,6 +104,16 @@
                 <span>Generate</span>
             }
         </button>
+        <button class="btn-pdf" @onclick="DownloadPdf" disabled="@IsPdfLoading">
+            @if (IsPdfLoading)
+            {
+                <span>Creating PDF...</span>
+            }
+            else
+            {
+                <span>Generate PDF</span>
+            }
+        </button>
     </div>
 
     @if (!string.IsNullOrEmpty(ResultMessage))
@@ -168,6 +179,7 @@
     private string SelectedDamages = "";
 
     private bool IsLoading;
+    private bool IsPdfLoading;
     private bool IsError;
     private string ResultMessage = "";
 
@@ -250,6 +262,29 @@
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        IsPdfLoading = true;
+        IsError = false;
+        ResultMessage = "";
+
+        try
+        {
+            var query = BuildQueryString();
+            var url = $"api/generate-pdf?{query}";
+            await JS.InvokeVoidAsync("downloadFile", url, "lot-catalog.pdf");
+        }
+        catch (Exception ex)
+        {
+            IsError = true;
+            ResultMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsPdfLoading = false;
         }
     }
 
