@@ -13,8 +13,8 @@ namespace LotCatalogFunction.Services
             IEnumerable<LotGroupOrderFunction> groupOrders,
             IEnumerable<LotSortOrder> sortOrders)
         {
-            var result = new LotGenerationResult();
             var runId = Guid.NewGuid();
+            var result = new LotGenerationResult { RunId = runId };
 
             var activeBoxes = boxes.ToList();
             var sortOrderList = sortOrders.ToList();

@@ -120,13 +120,17 @@ namespace LotCatalogFunction
 
                 var catalogBuildService = new CatalogBuildService();
 
-                var catalogLots = catalogBuildService.BuildCatalogLots(
+                var catalogBuildResult = catalogBuildService.BuildCatalogLots(
                     lots,
                     stringDefinitions,
                     groupOrders,
                     sortOrders,
-                    catalogNumberRules
+                    catalogNumberRules,
+                    generationResult.RunId
                 );
+
+                var catalogLots = catalogBuildResult.CatalogLots;
+                skippedGroups.AddRange(catalogBuildResult.SkippedGroups);
 
                 using var transaction = connection.BeginTransaction();
 
