@@ -1,8 +1,10 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using Dapper;
 using LotCatalogFunction.Models;
+using LotCatalogFunction.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -16,6 +18,13 @@ namespace LotCatalogFunction
 {
     public class PDFBuildFunction
     {
+        private readonly ILogger<PDFBuildFunction> _logger;
+
+        public PDFBuildFunction(ILogger<PDFBuildFunction> logger)
+        {
+            _logger = logger;
+        }
+
         [Function("PDFBuildFunction")]
         public async Task<HttpResponseData> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post")]
@@ -25,18 +34,13 @@ namespace LotCatalogFunction
             {
                 QuestPDF.Settings.License = LicenseType.Community;
 
-                string connectionString =
-                    Environment.GetEnvironmentVariable("IFTTEST")
-                    ?? Environment.GetEnvironmentVariable("SQLCONNSTR_IFTTEST");
+                var connectionString = ConnectionHelper.GetConnectionString();
 
                 if (string.IsNullOrWhiteSpace(connectionString))
                 {
+                    _logger.LogError("Connection string missing.");
                     var errorResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
-
-                    await errorResponse.WriteStringAsync(
-                        "Connection string missing."
-                    );
-
+                    await errorResponse.WriteStringAsync("Connection string missing.");
                     return errorResponse;
                 }
 
@@ -182,6 +186,9 @@ namespace LotCatalogFunction
 
                 }).GeneratePdf();
 
+                _logger.LogInformation("PDF generated: {Sections} sections, {Rows} rows",
+                    sections.Count, rows.Count);
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
 
                 response.Headers.Add(
@@ -204,6 +211,7 @@ namespace LotCatalogFunction
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in PDFBuildFunction");
                 var response = req.CreateResponse(
                     HttpStatusCode.InternalServerError
                 );
@@ -279,7 +287,7 @@ namespace LotCatalogFunction
                         {
                             column.Item()
                                 .AlignLeft()
-                                .Text("261 JULY 26")
+                                .Text(Environment.GetEnvironmentVariable("CATALOG_HEADER_TEXT") ?? "261 JULY 26")
                                 .FontSize(9)
                                 .Bold();
                         });

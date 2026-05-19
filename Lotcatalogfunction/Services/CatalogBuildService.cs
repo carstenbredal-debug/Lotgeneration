@@ -1,4 +1,5 @@
-﻿using LotCatalogFunction.Models;
+using LotCatalogFunction.Models;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,13 @@ namespace LotCatalogFunction.Services
 {
     public class CatalogBuildService
     {
+        private readonly ILogger<CatalogBuildService> _logger;
+
+        public CatalogBuildService(ILogger<CatalogBuildService> logger)
+        {
+            _logger = logger;
+        }
+
         public CatalogBuildResult BuildCatalogLots(
             IEnumerable<GeneratedLot> lots,
             IEnumerable<StringDefinition> stringDefinitions,
@@ -28,13 +36,7 @@ namespace LotCatalogFunction.Services
                 .Select(x => x.ColumnName)
                 .ToList();
 
-            var sortMap = sortOrders
-                .GroupBy(x => BuildSortKey(x.ColumnName, x.Value))
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.First().SortOrder,
-                    StringComparer.OrdinalIgnoreCase
-                );
+            var sortMap = LotPropertyHelper.BuildSortMap(sortOrders);
 
             var ruleMap = catalogNumberRules
                 .Where(x => x.IsActive)
@@ -73,6 +75,8 @@ namespace LotCatalogFunction.Services
 
                 if (!ruleMap.TryGetValue(ruleKey, out var prefix))
                 {
+                    _logger.LogWarning("Skipping catalog string: Missing CatalogNumberRule for {RuleKey}", ruleKey);
+
                     foreach (var lot in catalogString.Lots)
                     {
                         result.SkippedGroups.Add(new SkippedGroup
@@ -145,6 +149,9 @@ namespace LotCatalogFunction.Services
                 }
             }
 
+            _logger.LogInformation("Catalog build complete: {CatalogLotCount} catalog lots, {SkippedCount} skipped",
+                result.CatalogLots.Count, result.SkippedGroups.Count);
+
             return result;
         }
 
@@ -153,7 +160,7 @@ namespace LotCatalogFunction.Services
             List<string> orderedColumns,
             IReadOnlyDictionary<string, int> sortMap)
         {
-            IOrderedEnumerable<CatalogStringGroup>? ordered = null;
+            IOrderedEnumerable<CatalogStringGroup> ordered = null;
 
             foreach (var columnName in orderedColumns)
             {
@@ -163,12 +170,12 @@ namespace LotCatalogFunction.Services
 
                     var effectiveColumn =
                         columnName == "Size"
-                            ? GetSizeColumnName(lot)
+                            ? LotPropertyHelper.GetSizeColumnName(lot.Gender)
                             : columnName;
 
-                    var value = GetValue(lot, columnName);
+                    var value = GetLotValue(lot, columnName);
 
-                    return GetSortRank(sortMap, effectiveColumn, value);
+                    return LotPropertyHelper.GetSortRank(sortMap, effectiveColumn, value);
                 };
 
                 ordered = ordered == null
@@ -184,49 +191,17 @@ namespace LotCatalogFunction.Services
             List<string> stringColumns)
         {
             return string.Join("|",
-                stringColumns.Select(column => GetValue(lot, column))
+                stringColumns.Select(column => GetLotValue(lot, column))
             );
         }
 
-        private static string GetValue(
-            GeneratedLot lot,
-            string columnName)
+        private static string GetLotValue(GeneratedLot lot, string columnName)
         {
-            return columnName switch
-            {
-                "SalesType" => lot.SalesType ?? "",
-                "Gender" => lot.Gender ?? "",
-                "Group" => lot.Group ?? "",
-                "HairLength" => lot.HairLength ?? "",
-                "Size" => lot.Size ?? "",
-                "Quality" => lot.Quality ?? "",
-                "Color" => lot.Color ?? "",
-                "Clarity" => lot.Clarity ?? "",
-                "Damages" => lot.Damages ?? "",
-
-                _ => throw new InvalidOperationException(
-                    $"Unknown catalog column: {columnName}"
-                )
-            };
-        }
-
-        private static int GetSortRank(
-            IReadOnlyDictionary<string, int> sortMap,
-            string columnName,
-            string value)
-        {
-            var key = BuildSortKey(columnName, value);
-
-            return sortMap.TryGetValue(key, out var rank)
-                ? rank
-                : int.MaxValue;
-        }
-
-        private static string BuildSortKey(
-            string columnName,
-            string value)
-        {
-            return $"{columnName?.Trim() ?? ""}|{value?.Trim() ?? ""}";
+            return LotPropertyHelper.GetPropertyValue(
+                columnName,
+                lot.SalesType, lot.Gender, lot.Group,
+                lot.HairLength, lot.Size, lot.Quality,
+                lot.Color, lot.Clarity, lot.Damages);
         }
 
         private static string BuildRuleKey(
@@ -235,16 +210,6 @@ namespace LotCatalogFunction.Services
             string group)
         {
             return $"{salesType?.Trim() ?? ""}|{gender?.Trim() ?? ""}|{group?.Trim() ?? ""}";
-        }
-
-        private static string GetSizeColumnName(GeneratedLot lot)
-        {
-            return lot.Gender switch
-            {
-                "Females" => "Size_Females",
-                "Males" => "Size_Males",
-                _ => "Size"
-            };
         }
 
         private sealed class CatalogStringGroup
