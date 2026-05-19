@@ -8,9 +8,9 @@
 
     <div class="filter-grid">
         <div class="filter-item">
-            <select @bind="SelectedType">
-                <option value="">Select Type</option>
-                @foreach (var val in Types)
+            <select @bind="SelectedSalesType">
+                <option value="">Select Sales Type</option>
+                @foreach (var val in SalesTypes)
                 {
                     <option value="@val">@val</option>
                 }
@@ -35,9 +35,9 @@
             </select>
         </div>
         <div class="filter-item">
-            <select @bind="SelectedColor">
-                <option value="">Select Color</option>
-                @foreach (var val in Colors)
+            <select @bind="SelectedHairLength">
+                <option value="">Select Hair Length</option>
+                @foreach (var val in HairLengths)
                 {
                     <option value="@val">@val</option>
                 }
@@ -45,9 +45,27 @@
         </div>
 
         <div class="filter-item">
+            <select @bind="SelectedSize">
+                <option value="">Select Size</option>
+                @foreach (var val in Sizes)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+        <div class="filter-item">
             <select @bind="SelectedQuality">
                 <option value="">Select Quality</option>
                 @foreach (var val in Qualities)
+                {
+                    <option value="@val">@val</option>
+                }
+            </select>
+        </div>
+        <div class="filter-item">
+            <select @bind="SelectedColor">
+                <option value="">Select Color</option>
+                @foreach (var val in Colors)
                 {
                     <option value="@val">@val</option>
                 }
@@ -62,28 +80,10 @@
                 }
             </select>
         </div>
-        <div class="filter-item">
-            <select @bind="SelectedSize">
-                <option value="">Select Size</option>
-                @foreach (var val in Sizes)
-                {
-                    <option value="@val">@val</option>
-                }
-            </select>
-        </div>
-        <div class="filter-item">
-            <select @bind="SelectedHairLength">
-                <option value="">Select Hair Length</option>
-                @foreach (var val in HairLengths)
-                {
-                    <option value="@val">@val</option>
-                }
-            </select>
-        </div>
 
         <div class="filter-item">
-            <select @bind="SelectedDamage">
-                <option value="">Select Damage</option>
+            <select @bind="SelectedDamages">
+                <option value="">Select Damages</option>
                 @foreach (var val in Damages)
                 {
                     <option value="@val">@val</option>
@@ -120,15 +120,15 @@
                     <tr>
                         <th>Lot #</th>
                         <th>String #</th>
-                        <th>Type</th>
+                        <th>Sales Type</th>
                         <th>Gender</th>
                         <th>Group</th>
-                        <th>Color</th>
-                        <th>Quality</th>
-                        <th>Clarity</th>
-                        <th>Size</th>
                         <th>Hair Length</th>
-                        <th>Damage</th>
+                        <th>Size</th>
+                        <th>Quality</th>
+                        <th>Color</th>
+                        <th>Clarity</th>
+                        <th>Damages</th>
                         <th>Skins</th>
                     </tr>
                 </thead>
@@ -141,11 +141,11 @@
                             <td>@lot.SalesType</td>
                             <td>@lot.Gender</td>
                             <td>@lot.Group</td>
-                            <td>@lot.Color</td>
-                            <td>@lot.Quality</td>
-                            <td>@lot.Clarity</td>
-                            <td>@lot.Size</td>
                             <td>@lot.HairLength</td>
+                            <td>@lot.Size</td>
+                            <td>@lot.Quality</td>
+                            <td>@lot.Color</td>
+                            <td>@lot.Clarity</td>
                             <td>@lot.Damages</td>
                             <td>@lot.TotalSkins</td>
                         </tr>
@@ -157,15 +157,15 @@
 </div>
 
 @code {
-    private string SelectedType = "";
+    private string SelectedSalesType = "";
     private string SelectedGender = "";
     private string SelectedGroup = "";
-    private string SelectedColor = "";
-    private string SelectedQuality = "";
-    private string SelectedClarity = "";
-    private string SelectedSize = "";
     private string SelectedHairLength = "";
-    private string SelectedDamage = "";
+    private string SelectedSize = "";
+    private string SelectedQuality = "";
+    private string SelectedColor = "";
+    private string SelectedClarity = "";
+    private string SelectedDamages = "";
 
     private bool IsLoading;
     private bool IsError;
@@ -173,14 +173,14 @@
 
     private List<CatalogLotRow> CatalogLots = new();
 
-    private List<string> Types = new();
+    private List<string> SalesTypes = new();
     private List<string> Genders = new();
     private List<string> Groups = new();
-    private List<string> Colors = new();
-    private List<string> Qualities = new();
-    private List<string> Clarities = new();
-    private List<string> Sizes = new();
     private List<string> HairLengths = new();
+    private List<string> Sizes = new();
+    private List<string> Qualities = new();
+    private List<string> Colors = new();
+    private List<string> Clarities = new();
     private List<string> Damages = new();
 
     protected override async Task OnInitializedAsync()
@@ -190,14 +190,14 @@
             var filters = await Http.GetFromJsonAsync<FilterOptions>("api/filters");
             if (filters != null)
             {
-                Types = filters.Types ?? new();
+                SalesTypes = filters.Types ?? new();
                 Genders = filters.Genders ?? new();
                 Groups = filters.Groups ?? new();
-                Colors = filters.Colors ?? new();
-                Qualities = filters.Qualities ?? new();
-                Clarities = filters.Clarities ?? new();
-                Sizes = filters.Sizes ?? new();
                 HairLengths = filters.HairLengths ?? new();
+                Sizes = filters.Sizes ?? new();
+                Qualities = filters.Qualities ?? new();
+                Colors = filters.Colors ?? new();
+                Clarities = filters.Clarities ?? new();
                 Damages = filters.Damages ?? new();
             }
         }
@@ -256,15 +256,15 @@
     private string BuildQueryString()
     {
         var parts = new List<string>();
-        if (!string.IsNullOrEmpty(SelectedType)) parts.Add($"type={Uri.EscapeDataString(SelectedType)}");
+        if (!string.IsNullOrEmpty(SelectedSalesType)) parts.Add($"type={Uri.EscapeDataString(SelectedSalesType)}");
         if (!string.IsNullOrEmpty(SelectedGender)) parts.Add($"gender={Uri.EscapeDataString(SelectedGender)}");
         if (!string.IsNullOrEmpty(SelectedGroup)) parts.Add($"group={Uri.EscapeDataString(SelectedGroup)}");
-        if (!string.IsNullOrEmpty(SelectedColor)) parts.Add($"color={Uri.EscapeDataString(SelectedColor)}");
-        if (!string.IsNullOrEmpty(SelectedQuality)) parts.Add($"quality={Uri.EscapeDataString(SelectedQuality)}");
-        if (!string.IsNullOrEmpty(SelectedClarity)) parts.Add($"clarity={Uri.EscapeDataString(SelectedClarity)}");
-        if (!string.IsNullOrEmpty(SelectedSize)) parts.Add($"size={Uri.EscapeDataString(SelectedSize)}");
         if (!string.IsNullOrEmpty(SelectedHairLength)) parts.Add($"hairLength={Uri.EscapeDataString(SelectedHairLength)}");
-        if (!string.IsNullOrEmpty(SelectedDamage)) parts.Add($"damage={Uri.EscapeDataString(SelectedDamage)}");
+        if (!string.IsNullOrEmpty(SelectedSize)) parts.Add($"size={Uri.EscapeDataString(SelectedSize)}");
+        if (!string.IsNullOrEmpty(SelectedQuality)) parts.Add($"quality={Uri.EscapeDataString(SelectedQuality)}");
+        if (!string.IsNullOrEmpty(SelectedColor)) parts.Add($"color={Uri.EscapeDataString(SelectedColor)}");
+        if (!string.IsNullOrEmpty(SelectedClarity)) parts.Add($"clarity={Uri.EscapeDataString(SelectedClarity)}");
+        if (!string.IsNullOrEmpty(SelectedDamages)) parts.Add($"damage={Uri.EscapeDataString(SelectedDamages)}");
         return string.Join("&", parts);
     }
 
@@ -273,11 +273,11 @@
         public List<string>? Types { get; set; }
         public List<string>? Genders { get; set; }
         public List<string>? Groups { get; set; }
-        public List<string>? Colors { get; set; }
-        public List<string>? Qualities { get; set; }
-        public List<string>? Clarities { get; set; }
-        public List<string>? Sizes { get; set; }
         public List<string>? HairLengths { get; set; }
+        public List<string>? Sizes { get; set; }
+        public List<string>? Qualities { get; set; }
+        public List<string>? Colors { get; set; }
+        public List<string>? Clarities { get; set; }
         public List<string>? Damages { get; set; }
     }
 
@@ -288,11 +288,11 @@
         public string SalesType { get; set; } = "";
         public string Gender { get; set; } = "";
         public string Group { get; set; } = "";
-        public string Color { get; set; } = "";
-        public string Quality { get; set; } = "";
-        public string Clarity { get; set; } = "";
-        public string Size { get; set; } = "";
         public string HairLength { get; set; } = "";
+        public string Size { get; set; } = "";
+        public string Quality { get; set; } = "";
+        public string Color { get; set; } = "";
+        public string Clarity { get; set; } = "";
         public string Damages { get; set; } = "";
         public int TotalSkins { get; set; }
         public bool IsShow { get; set; }

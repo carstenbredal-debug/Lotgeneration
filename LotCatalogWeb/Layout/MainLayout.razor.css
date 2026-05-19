@@ -35,6 +35,16 @@ main {
     letter-spacing: 0.05em;
 }
 
+.top-row-spacer {
+    flex: 1;
+}
+
+.user-icon {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
 .content {
     flex: 1;
     padding: 1.5rem 2rem;
