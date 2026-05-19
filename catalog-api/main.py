@@ -403,15 +403,14 @@ async def generate_pdf(
 
                 if is_multi:
                     last_row = len(sg_data) - 1
-                    style_cmds.append(("LINEABOVE", (0, 0), (3, 0), 1.25, black))
-                    style_cmds.append(("LINEBELOW", (0, last_row), (3, last_row), 1.25, black))
-                    style_cmds.append(("LINEBEFORE", (0, 0), (0, last_row), 1.25, black))
-                    style_cmds.append(("LINEAFTER", (3, 0), (3, last_row), 1.25, black))
+                    # BOX draws all 4 borders around the range in one command
+                    style_cmds.append(("BOX", (0, 0), (3, last_row), 1.25, black))
 
                 st.setStyle(TableStyle(style_cmds))
 
                 if is_multi:
                     elements.append(KeepTogether([st]))
+                    elements.append(Spacer(1, 1))
                 else:
                     elements.append(st)
 
