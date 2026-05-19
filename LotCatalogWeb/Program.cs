@@ -6,8 +6,8 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-var baseUri = new Uri(builder.HostEnvironment.BaseAddress);
-var cleanBase = new UriBuilder(baseUri) { UserName = "", Password = "" }.Uri;
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = cleanBase });
+var apiBase = builder.Configuration["ApiBaseUrl"]
+    ?? "https://lotcatalogfunction.azurewebsites.net";
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBase) });
 
 await builder.Build().RunAsync();
