@@ -46,6 +46,23 @@
     margin-bottom: 1.5rem;
 }
 
+.btn-reset {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    margin-right: auto;
+}
+
+.btn-reset:hover {
+    background-color: #5a6268;
+}
+
 .btn-generate {
     background-color: #2d1b4e;
     color: white;
