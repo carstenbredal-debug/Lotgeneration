@@ -156,8 +156,8 @@
     background-color: #fef9e7;
 }
 
-/* Multi-lot string grouping — borders and background only on columns 1-4 */
-::deep .string-row td:nth-child(-n+4) {
+/* Multi-lot string grouping — background on full row, borders on columns 1-4 */
+::deep .string-row {
     background-color: #fef9e7;
 }
 
