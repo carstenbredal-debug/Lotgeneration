@@ -156,13 +156,12 @@
     background-color: #fef9e7;
 }
 
-/* Multi-lot string grouping borders */
-::deep .string-row td {
-    border-left-color: #ddd;
-    border-right-color: #ddd;
+/* Multi-lot string grouping — borders and background only on columns 1-4 */
+::deep .string-row td:nth-child(-n+4) {
+    background-color: #fef9e7;
 }
 
-::deep .string-first td {
+::deep .string-first td:nth-child(-n+4) {
     border-top: 2px solid #333;
 }
 
@@ -174,7 +173,7 @@
     border-right: 2px solid #333;
 }
 
-::deep .string-last td {
+::deep .string-last td:nth-child(-n+4) {
     border-bottom: 2px solid #333;
 }
 
