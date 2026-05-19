@@ -137,7 +137,7 @@ namespace LotCatalogFunction
                         Damages,
                         TotalSkins,
                         BoxCount,
-                        IsShow,
+                        CASE WHEN IsShow = 'Yes' THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS IsShow,
 
                         COUNT(*) OVER (
                             PARTITION BY StringNumber
