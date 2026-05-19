@@ -94,6 +94,7 @@
     </div>
 
     <div class="action-row">
+        <button class="btn-reset" @onclick="ResetFilters">Reset</button>
         <button class="btn-generate" @onclick="Generate" disabled="@IsLoading">
             @if (IsLoading)
             {
@@ -240,6 +241,22 @@
         {
             // API not available yet — filters will be empty
         }
+    }
+
+    private void ResetFilters()
+    {
+        SelectedSalesType = "";
+        SelectedGender = "";
+        SelectedGroup = "";
+        SelectedHairLength = "";
+        SelectedSize = "";
+        SelectedQuality = "";
+        SelectedColor = "";
+        SelectedClarity = "";
+        SelectedDamages = "";
+        ResultMessage = "";
+        IsError = false;
+        CatalogLots.Clear();
     }
 
     private async Task Generate()
