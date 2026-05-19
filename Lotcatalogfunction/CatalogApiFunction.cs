@@ -461,25 +461,49 @@ namespace LotCatalogFunction
 
         private static void AddCatalogRow(TableDescriptor table, CatalogPdfRow row)
         {
-            var lotText = row.IsMultiLotString
-                ? $"**** {row.LotNumber}"
-                : row.LotNumber.ToString();
+            table.Cell()
+                .Element(x => MultiStringCell(x, row, isLeftEdge: true))
+                .Text(row.LotNumber.ToString());
 
             table.Cell()
-                .Element(BodyCell)
-                .Text(lotText);
-
-            table.Cell()
-                .Element(BodyCell)
+                .Element(x => MultiStringCell(x, row))
                 .Text(row.TotalSkins.ToString("#,##0"));
 
             table.Cell()
-                .Element(BodyCell)
+                .Element(x => MultiStringCell(x, row, isRightEdge: true))
                 .Text(BuildDescriptionText(row));
 
             table.Cell()
                 .Element(BodyCell)
                 .Text("");
+        }
+
+        private static IContainer MultiStringCell(
+            IContainer container, CatalogPdfRow row,
+            bool isLeftEdge = false, bool isRightEdge = false)
+        {
+            var cell = container
+                .Border(0.5f)
+                .BorderColor(Colors.Grey.Lighten1)
+                .Background(Colors.White)
+                .PaddingVertical(3)
+                .PaddingHorizontal(4);
+
+            if (!row.IsMultiLotString) return cell;
+
+            if (row.LotSequenceInString == 1)
+                cell = cell.BorderTop(1.25f).BorderColor(Colors.Black);
+
+            if (row.IsLastLotInString)
+                cell = cell.BorderBottom(1.25f).BorderColor(Colors.Black);
+
+            if (isLeftEdge)
+                cell = cell.BorderLeft(1.25f).BorderColor(Colors.Black);
+
+            if (isRightEdge)
+                cell = cell.BorderRight(1.25f).BorderColor(Colors.Black);
+
+            return cell;
         }
 
         private static void ComposeHeader(IContainer container)
