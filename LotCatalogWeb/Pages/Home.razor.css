@@ -114,6 +114,19 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+.section-block {
+    margin-bottom: 1.5rem;
+}
+
+.section-header {
+    background-color: #e8e8e8;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #333;
+    border: 1px solid #bbb;
+}
+
 .results-table table {
     width: 100%;
     border-collapse: collapse;
@@ -121,16 +134,17 @@
 }
 
 .results-table th {
-    background-color: #2d1b4e;
-    color: white;
+    background-color: #d0d0d0;
+    color: #333;
     padding: 0.6rem 0.75rem;
     text-align: left;
     font-weight: 600;
+    border: 1px solid #bbb;
 }
 
 .results-table td {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #eee;
+    border: 1px solid #ddd;
     color: #333;
 }
 
@@ -140,6 +154,44 @@
 
 .showlot-row {
     background-color: #fef9e7;
+}
+
+/* Multi-lot string grouping borders */
+::deep .string-row td {
+    border-left-color: #ddd;
+    border-right-color: #ddd;
+}
+
+::deep .string-first td {
+    border-top: 2px solid #333;
+}
+
+::deep .string-first td:first-child {
+    border-left: 2px solid #333;
+}
+
+::deep .string-first td:nth-child(4) {
+    border-right: 2px solid #333;
+}
+
+::deep .string-last td {
+    border-bottom: 2px solid #333;
+}
+
+::deep .string-last td:first-child {
+    border-left: 2px solid #333;
+}
+
+::deep .string-last td:nth-child(4) {
+    border-right: 2px solid #333;
+}
+
+::deep .string-row:not(.string-first):not(.string-last) td:first-child {
+    border-left: 2px solid #333;
+}
+
+::deep .string-row:not(.string-first):not(.string-last) td:nth-child(4) {
+    border-right: 2px solid #333;
 }
 
 @media (max-width: 768px) {

@@ -126,43 +126,66 @@
     @if (CatalogLots.Any())
     {
         <div class="results-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Lot #</th>
-                        <th>String #</th>
-                        <th>Sales Type</th>
-                        <th>Gender</th>
-                        <th>Group</th>
-                        <th>Hair Length</th>
-                        <th>Size</th>
-                        <th>Quality</th>
-                        <th>Color</th>
-                        <th>Clarity</th>
-                        <th>Damages</th>
-                        <th>Skins</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var lot in CatalogLots)
-                    {
-                        <tr class="@(lot.IsShow ? "showlot-row" : "")">
-                            <td>@lot.LotNumber</td>
-                            <td>@lot.StringNumber</td>
-                            <td>@lot.SalesType</td>
-                            <td>@lot.Gender</td>
-                            <td>@lot.Group</td>
-                            <td>@lot.HairLength</td>
-                            <td>@lot.Size</td>
-                            <td>@lot.Quality</td>
-                            <td>@lot.Color</td>
-                            <td>@lot.Clarity</td>
-                            <td>@lot.Damages</td>
-                            <td>@lot.TotalSkins</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            @foreach (var grp in GetSections())
+            {
+                <div class="section-block">
+                    <div class="section-header">@grp.Key</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Lot #</th>
+                                <th>String #</th>
+                                <th>Description</th>
+                                <th>Skins</th>
+                                <th>Price</th>
+                                <th>Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ var stringGroups = grp.Value
+                                .GroupBy(l => l.StringNumber)
+                                .OrderBy(g => g.Min(l => l.CatalogSortOrder)); }
+                            @foreach (var sg in stringGroups)
+                            {
+                                var sgList = sg.OrderBy(l => l.CatalogSortOrder).ToList();
+                                var isMulti = sgList.Count > 1;
+                                @for (int i = 0; i < sgList.Count; i++)
+                                {
+                                    var lot = sgList[i];
+                                    var isFirst = (i == 0);
+                                    var isLast = (i == sgList.Count - 1);
+                                    var cssClass = "";
+                                    if (isMulti)
+                                    {
+                                        cssClass = "string-row";
+                                        if (isFirst) cssClass += " string-first";
+                                        if (isLast) cssClass += " string-last";
+                                    }
+                                    if (lot.IsShow) cssClass += " showlot-row";
+
+                                    var desc = BuildDescription(lot);
+                                    if (isMulti && !isFirst)
+                                    {
+                                        if (isLast)
+                                            desc = $"{sgList.Sum(l => l.TotalSkins):N0} skins";
+                                        else
+                                            desc = (i + 1).ToString();
+                                    }
+
+                                    <tr class="@cssClass">
+                                        <td>@lot.LotNumber</td>
+                                        <td>@lot.StringNumber</td>
+                                        <td>@desc</td>
+                                        <td>@lot.TotalSkins.ToString("N0")</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     }
 </div>
@@ -316,10 +339,31 @@
         public List<string>? Damages { get; set; }
     }
 
+    private Dictionary<string, List<CatalogLotRow>> GetSections()
+    {
+        return CatalogLots
+            .GroupBy(l => $"{l.SalesType} - {l.Gender} - {l.Group}")
+            .ToDictionary(g => g.Key, g => g.ToList());
+    }
+
+    private string BuildDescription(CatalogLotRow lot)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(lot.HairLength)) parts.Add(lot.HairLength);
+        if (!string.IsNullOrWhiteSpace(lot.Size)) parts.Add(lot.Size);
+        if (!string.IsNullOrWhiteSpace(lot.Quality)) parts.Add(lot.Quality);
+        if (!string.IsNullOrWhiteSpace(lot.Color)) parts.Add(lot.Color);
+        if (!string.IsNullOrWhiteSpace(lot.Clarity)) parts.Add(lot.Clarity);
+        if (!string.IsNullOrWhiteSpace(lot.Damages) && !lot.Damages.Equals("None", StringComparison.OrdinalIgnoreCase))
+            parts.Add(lot.Damages);
+        return string.Join(" / ", parts);
+    }
+
     public class CatalogLotRow
     {
         public int LotNumber { get; set; }
         public int StringNumber { get; set; }
+        public int CatalogSortOrder { get; set; }
         public string SalesType { get; set; } = "";
         public string Gender { get; set; } = "";
         public string Group { get; set; } = "";
@@ -330,6 +374,9 @@
         public string Clarity { get; set; } = "";
         public string Damages { get; set; } = "";
         public int TotalSkins { get; set; }
+        public int LotsInString { get; set; }
+        public int LotSequenceInString { get; set; }
+        public int StringTotalSkins { get; set; }
         public bool IsShow { get; set; }
     }
 }

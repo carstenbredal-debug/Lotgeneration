@@ -109,6 +109,7 @@ async def get_catalog_lots(
             SELECT
                 LotNumber,
                 StringNumber,
+                CatalogSortOrder,
                 SalesType,
                 Gender,
                 [Group],
@@ -120,7 +121,21 @@ async def get_catalog_lots(
                 Damages,
                 TotalSkins,
                 BoxCount,
-                IsShow
+                IsShow,
+
+                COUNT(*) OVER (
+                    PARTITION BY StringNumber
+                ) AS LotsInString,
+
+                ROW_NUMBER() OVER (
+                    PARTITION BY StringNumber
+                    ORDER BY CatalogSortOrder
+                ) AS LotSequenceInString,
+
+                SUM(TotalSkins) OVER (
+                    PARTITION BY StringNumber
+                ) AS StringTotalSkins
+
             FROM dbo.CatalogLots
             WHERE 1=1"""
 
