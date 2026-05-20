@@ -41,7 +41,7 @@ main {
 }
 
 .footer-column a {
-    color: rgba(255, 255, 255, 0.8);
+    color: white;
     text-decoration: none;
     font-size: 1rem;
 }
@@ -53,7 +53,7 @@ main {
 .footer-info {
     text-align: center;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: white;
 }
 
 .footer-info p {
