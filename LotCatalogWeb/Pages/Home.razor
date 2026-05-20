@@ -3,11 +3,14 @@
 @inject IJSRuntime JS
 @inject IConfiguration Config
 
-<PageTitle>Catalogue</PageTitle>
+<PageTitle>Generate Catalogue</PageTitle>
 
 <div class="catalogue-page">
-    <h2 class="page-title">Catalogue</h2>
+    <div class="title-section">
+        <h2 class="page-title">GENERATE CATALOGUE</h2>
+    </div>
 
+    <div class="filter-section">
     <div class="filter-grid">
         <div class="filter-item">
             <select @bind="SelectedSalesType">
@@ -93,9 +96,10 @@
             </select>
         </div>
     </div>
+    </div>
 
     <div class="action-row">
-        <button class="btn-reset" @onclick="ResetFilters">Reset</button>
+        <button class="btn-print" @onclick="PrintResults">Print results</button>
         <button class="btn-generate" @onclick="Generate" disabled="@IsLoading">
             @if (IsLoading)
             {
@@ -103,7 +107,7 @@
             }
             else
             {
-                <span>Generate</span>
+                <span>GENERATE</span>
             }
         </button>
         <button class="btn-pdf" @onclick="DownloadPdf" disabled="@IsPdfLoading">
@@ -113,7 +117,7 @@
             }
             else
             {
-                <span>Generate PDF</span>
+                <span>GENERATE PDF</span>
             }
         </button>
     </div>
@@ -242,6 +246,11 @@
         {
             // API not available yet — filters will be empty
         }
+    }
+
+    private async Task PrintResults()
+    {
+        await JS.InvokeVoidAsync("print");
     }
 
     private void ResetFilters()
