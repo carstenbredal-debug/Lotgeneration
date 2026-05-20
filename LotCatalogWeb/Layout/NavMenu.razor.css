@@ -48,7 +48,7 @@
 }
 
 ::deep .btn-login {
-    background-color: #e8501e;
+    background-color: #2d1b4e;
     color: white;
     text-decoration: none;
     padding: 0.45rem 1.25rem;
@@ -60,6 +60,6 @@
 }
 
 ::deep .btn-login:hover {
-    background-color: #d04518;
+    background-color: #3d2a5e;
     color: white;
 }
