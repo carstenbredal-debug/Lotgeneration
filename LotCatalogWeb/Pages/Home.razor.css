@@ -1,29 +1,43 @@
 .catalogue-page {
-    max-width: 1200px;
+    max-width: 100%;
+}
+
+.title-section {
+    text-align: center;
+    padding: 2rem 2rem 1.5rem;
+    background-color: #f5f0eb;
 }
 
 .page-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 1.25rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2d1b4e;
+    margin: 0;
+    letter-spacing: 0.05em;
+}
+
+/* Filter section — dark purple background */
+.filter-section {
+    background-color: #2d1b4e;
+    padding: 2rem 3rem;
 }
 
 .filter-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .filter-item select {
     width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #d0d0d0;
-    border-radius: 6px;
-    background-color: white;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0;
+    background-color: transparent;
     font-size: 0.85rem;
-    color: #888;
+    color: rgba(255, 255, 255, 0.7);
     appearance: auto;
     cursor: pointer;
     outline: none;
@@ -31,52 +45,57 @@
 }
 
 .filter-item select:focus {
-    border-color: #2d1b4e;
-    color: #333;
+    border-color: white;
+    color: white;
 }
 
-.filter-item select:not([value=""]) {
-    color: #333;
+.filter-item select option {
+    background-color: #2d1b4e;
+    color: white;
 }
 
+/* Action buttons row */
 .action-row {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    padding: 1.5rem 2rem;
+    background-color: #f5f0eb;
 }
 
-.btn-reset {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 0.5rem 1.5rem;
-    border-radius: 6px;
+.btn-print {
+    background-color: transparent;
+    color: #333;
+    border: 1px solid #333;
+    padding: 0.55rem 1.5rem;
+    border-radius: 0;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.15s;
-    margin-right: auto;
+    transition: all 0.15s;
+    text-transform: lowercase;
 }
 
-.btn-reset:hover {
-    background-color: #5a6268;
+.btn-print:hover {
+    background-color: #333;
+    color: white;
 }
 
 .btn-generate {
-    background-color: #2d1b4e;
+    background-color: #e8501e;
     color: white;
     border: none;
-    padding: 0.5rem 1.5rem;
-    border-radius: 6px;
+    padding: 0.55rem 1.5rem;
+    border-radius: 0;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.15s;
+    text-transform: uppercase;
 }
 
 .btn-generate:hover:not(:disabled) {
-    background-color: #3d2a5e;
+    background-color: #d04518;
 }
 
 .btn-generate:disabled {
@@ -85,19 +104,20 @@
 }
 
 .btn-pdf {
-    background-color: #c0392b;
+    background-color: #2d1b4e;
     color: white;
     border: none;
-    padding: 0.5rem 1.5rem;
-    border-radius: 6px;
+    padding: 0.55rem 1.5rem;
+    border-radius: 0;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.15s;
+    text-transform: uppercase;
 }
 
 .btn-pdf:hover:not(:disabled) {
-    background-color: #e74c3c;
+    background-color: #3d2a5e;
 }
 
 .btn-pdf:disabled {
@@ -105,17 +125,18 @@
     cursor: not-allowed;
 }
 
+/* Result messages */
 .result-message {
     padding: 0.75rem 1rem;
-    border-radius: 6px;
-    margin-bottom: 1rem;
+    margin: 0;
     font-size: 0.85rem;
+    text-align: center;
 }
 
 .result-message.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background-color: #6ba5a1;
+    color: white;
+    border: none;
 }
 
 .result-message.error {
@@ -124,24 +145,25 @@
     border: 1px solid #f5c6cb;
 }
 
+/* Results table */
 .results-table {
     background: white;
-    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin: 0;
 }
 
 .section-block {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0;
 }
 
 .section-header {
-    background-color: #e8e8e8;
+    background-color: #2d1b4e;
     padding: 0.6rem 0.75rem;
     font-size: 0.9rem;
     font-weight: 700;
-    color: #333;
-    border: 1px solid #bbb;
+    color: white;
+    text-align: center;
+    letter-spacing: 0.05em;
 }
 
 .results-table table {
@@ -151,12 +173,12 @@
 }
 
 .results-table th {
-    background-color: #d0d0d0;
-    color: #333;
+    background-color: #8b7fa0;
+    color: white;
     padding: 0.6rem 0.75rem;
     text-align: left;
     font-weight: 600;
-    border: 1px solid #bbb;
+    border: 1px solid #7a6e90;
 }
 
 .results-table td {
