@@ -17,7 +17,8 @@ main {
 .site-footer {
     background-color: #2d1b4e;
     color: white;
-    padding: 2rem 3rem;
+    padding: 2.5rem 3rem;
+    font-family: 'PPPangramSans', sans-serif;
 }
 
 .footer-content {
@@ -42,7 +43,7 @@ main {
 .footer-column a {
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
-    font-size: 0.8rem;
+    font-size: 1rem;
 }
 
 .footer-column a:hover {
@@ -51,12 +52,18 @@ main {
 
 .footer-info {
     text-align: center;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.7);
 }
 
 .footer-info p {
     margin: 0.15rem 0;
+}
+
+.footer-company-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: white;
 }
 
 .footer-brand {
@@ -65,6 +72,6 @@ main {
 }
 
 .footer-logo {
-    height: 80px;
+    height: 120px;
     width: auto;
 }
