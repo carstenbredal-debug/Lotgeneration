@@ -59,18 +59,18 @@
             </select>
         </div>
         <div class="filter-item">
-            <select @bind="SelectedQuality">
-                <option value="">Select Quality</option>
-                @foreach (var val in Qualities)
+            <select @bind="SelectedColor">
+                <option value="">Select Color</option>
+                @foreach (var val in Colors)
                 {
                     <option value="@val">@val</option>
                 }
             </select>
         </div>
         <div class="filter-item">
-            <select @bind="SelectedColor">
-                <option value="">Select Color</option>
-                @foreach (var val in Colors)
+            <select @bind="SelectedQuality">
+                <option value="">Select Quality</option>
+                @foreach (var val in Qualities)
                 {
                     <option value="@val">@val</option>
                 }
@@ -99,7 +99,7 @@
     </div>
 
     <div class="action-row">
-        <button class="btn-print" @onclick="PrintResults">Print results</button>
+        <button class="btn-reset" @onclick="ResetFilters">RESET VALUES</button>
         <button class="btn-generate" @onclick="Generate" disabled="@IsLoading">
             @if (IsLoading)
             {

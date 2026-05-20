@@ -3,7 +3,7 @@
     align-items: center;
     padding: 0.75rem 2rem;
     background-color: white;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 2px solid #2d1b4e;
 }
 
 .nav-brand {
@@ -48,7 +48,7 @@
 }
 
 ::deep .btn-login {
-    background-color: #2d1b4e;
+    background-color: #e8501e;
     color: white;
     text-decoration: none;
     padding: 0.45rem 1.25rem;
@@ -60,6 +60,6 @@
 }
 
 ::deep .btn-login:hover {
-    background-color: #3d2a5e;
+    background-color: #d04518;
     color: white;
 }

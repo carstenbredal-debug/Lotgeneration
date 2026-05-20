@@ -56,27 +56,30 @@
 
 /* Action buttons row */
 .action-row {
-    display: flex;
-    justify-content: center;
-    gap: 0.75rem;
-    padding: 1.5rem 2rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 2rem 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
     background-color: #f5f0eb;
 }
 
-.btn-print {
+.btn-reset {
     background-color: transparent;
     color: #333;
-    border: 1px solid #333;
-    padding: 0.55rem 1.5rem;
+    border: 2px solid #333;
+    padding: 0.85rem 1.5rem;
     border-radius: 0;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s;
-    text-transform: lowercase;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.btn-print:hover {
+.btn-reset:hover {
     background-color: #333;
     color: white;
 }
@@ -85,13 +88,14 @@
     background-color: #e8501e;
     color: white;
     border: none;
-    padding: 0.55rem 1.5rem;
-    border-radius: 0;
+    padding: 0.85rem 1.5rem;
+    border-radius: 4px;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.15s;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .btn-generate:hover:not(:disabled) {
@@ -107,13 +111,14 @@
     background-color: #2d1b4e;
     color: white;
     border: none;
-    padding: 0.55rem 1.5rem;
+    padding: 0.85rem 1.5rem;
     border-radius: 0;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.15s;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .btn-pdf:hover:not(:disabled) {
