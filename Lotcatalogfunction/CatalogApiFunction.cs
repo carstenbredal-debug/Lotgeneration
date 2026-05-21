@@ -353,33 +353,17 @@ namespace LotCatalogFunction
 
                                             foreach (var stringGroup in stringGroups)
                                             {
-                                                bool isMultiLot = stringGroup.Any(r => r.IsMultiLotString);
+                                                var rows = stringGroup
+                                                    .OrderBy(x => x.CatalogSortOrder)
+                                                    .ToList();
+                                                bool isMultiLot = rows.Any(r => r.IsMultiLotString);
 
-                                                var outerCell = table.Cell()
-                                                    .ColumnSpan(4)
-                                                    .Element(x => x.ShowEntire());
-
-                                                if (isMultiLot)
-                                                    outerCell = outerCell
-                                                        .Border(1.5f)
-                                                        .BorderColor(Colors.Black);
-
-                                                outerCell.Table(innerTable =>
-                                                    {
-                                                        innerTable.ColumnsDefinition(columns =>
-                                                        {
-                                                            columns.ConstantColumn(70);
-                                                            columns.ConstantColumn(55);
-                                                            columns.RelativeColumn();
-                                                            columns.ConstantColumn(90);
-                                                        });
-
-                                                        foreach (var row in stringGroup
-                                                            .OrderBy(x => x.CatalogSortOrder))
-                                                        {
-                                                            AddCatalogRow(innerTable, row, isMultiLot);
-                                                        }
-                                                    });
+                                                for (int i = 0; i < rows.Count; i++)
+                                                {
+                                                    bool isFirst = (i == 0);
+                                                    bool isLast = (i == rows.Count - 1);
+                                                    AddCatalogRow(table, rows[i], isMultiLot, isFirst, isLast);
+                                                }
                                             }
                                         });
                                 }
@@ -467,25 +451,48 @@ namespace LotCatalogFunction
             table.Cell().Element(HeaderCell).Text("Comments").Bold();
         }
 
-        private static void AddCatalogRow(TableDescriptor table, CatalogPdfRow row, bool isMultiLot = false)
+        private static void AddCatalogRow(
+            TableDescriptor table, CatalogPdfRow row,
+            bool isMultiLot, bool isFirst, bool isLast)
         {
-            IContainer CellStyle(IContainer c) => isMultiLot ? StringCell(c) : BodyCell(c);
+            if (!isMultiLot)
+            {
+                table.Cell().Element(BodyCell).Text(row.LotNumber.ToString());
+                table.Cell().Element(BodyCell).Text(row.TotalSkins.ToString("#,##0"));
+                table.Cell().Element(BodyCell).Text(BuildDescriptionText(row));
+                table.Cell().Element(BodyCell).Text("");
+                return;
+            }
 
-            table.Cell()
-                .Element(CellStyle)
-                .Text(row.LotNumber.ToString());
+            for (int col = 0; col < 4; col++)
+            {
+                string text = col switch
+                {
+                    0 => row.LotNumber.ToString(),
+                    1 => row.TotalSkins.ToString("#,##0"),
+                    2 => BuildDescriptionText(row),
+                    _ => ""
+                };
 
-            table.Cell()
-                .Element(CellStyle)
-                .Text(row.TotalSkins.ToString("#,##0"));
+                var cell = table.Cell();
+                var container = cell
+                    .Background(Colors.White)
+                    .PaddingVertical(3)
+                    .PaddingHorizontal(4);
 
-            table.Cell()
-                .Element(CellStyle)
-                .Text(BuildDescriptionText(row));
+                if (isFirst)
+                    container = container.BorderTop(1.5f).BorderColor(Colors.Black);
+                if (isLast)
+                    container = container.BorderBottom(1.5f).BorderColor(Colors.Black);
+                else
+                    container = container.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
+                if (col == 0)
+                    container = container.BorderLeft(1.5f).BorderColor(Colors.Black);
+                if (col == 3)
+                    container = container.BorderRight(1.5f).BorderColor(Colors.Black);
 
-            table.Cell()
-                .Element(CellStyle)
-                .Text("");
+                container.Text(text);
+            }
         }
 
 
@@ -566,16 +573,6 @@ namespace LotCatalogFunction
                 .BorderColor(Colors.Grey.Medium)
                 .Background(Colors.Grey.Lighten3)
                 .PaddingVertical(4)
-                .PaddingHorizontal(4);
-        }
-
-        private static IContainer StringCell(IContainer container)
-        {
-            return container
-                .BorderBottom(0.5f)
-                .BorderColor(Colors.Grey.Lighten1)
-                .Background(Colors.White)
-                .PaddingVertical(3)
                 .PaddingHorizontal(4);
         }
 
