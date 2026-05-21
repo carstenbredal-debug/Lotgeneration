@@ -487,16 +487,16 @@ namespace LotCatalogFunction
 
                 if (isMultiLot)
                 {
-                    // Layer 1 (outer): GREY 0.5f borders (inner separators + column dividers)
-                    // Layer 2 (inner): BLACK 0.75f borders (group perimeter only)
+                    // Layer 1 (outer): GREY 0.75f borders (inner separators + column dividers)
+                    // Layer 2 (inner): BLACK 1.25f borders (group perimeter only)
                     IContainer c = cell;
 
                     bool hasGreyBottom = !isLast;
                     bool hasGreyRight = col < 3;
                     if (hasGreyBottom)
-                        c = c.BorderBottom(0.5f);
+                        c = c.BorderBottom(0.75f);
                     if (hasGreyRight)
-                        c = c.BorderRight(0.5f);
+                        c = c.BorderRight(0.75f);
                     if (hasGreyBottom || hasGreyRight)
                     {
                         c = c.BorderColor(Colors.Grey.Lighten1);
@@ -504,13 +504,13 @@ namespace LotCatalogFunction
                     }
 
                     if (isFirst && !prevIsMultiLotEnd)
-                        c = c.BorderTop(0.75f);
+                        c = c.BorderTop(1.25f);
                     if (isLast)
-                        c = c.BorderBottom(0.75f);
+                        c = c.BorderBottom(1.25f);
                     if (col == 0)
-                        c = c.BorderLeft(0.75f);
+                        c = c.BorderLeft(1.25f);
                     if (col == 3)
-                        c = c.BorderRight(0.75f);
+                        c = c.BorderRight(1.25f);
                     c = c.BorderColor(Colors.Black);
 
                     c.Background(Colors.White)
@@ -525,10 +525,10 @@ namespace LotCatalogFunction
                     // (the string group's own BorderTop handles that edge).
                     IContainer c = cell;
                     if (col == 0)
-                        c = c.BorderLeft(0.5f);
-                    c = c.BorderRight(0.5f);
+                        c = c.BorderLeft(0.75f);
+                    c = c.BorderRight(0.75f);
                     if (!nextIsMultiLotStart)
-                        c = c.BorderBottom(0.5f);
+                        c = c.BorderBottom(0.75f);
                     c.BorderColor(Colors.Grey.Lighten1)
                      .Background(Colors.White)
                      .PaddingVertical(3)
@@ -575,7 +575,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                    text.Span("  [BUILD-V17]");
+                    text.Span("  [BUILD-V19]");
                 });
         }
 
