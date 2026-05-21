@@ -463,17 +463,10 @@ namespace LotCatalogFunction
         {
             if (!isMultiLot)
             {
-                IContainer NormalCell(IContainer c)
-                {
-                    var s = c.Background(Colors.White).PaddingVertical(3).PaddingHorizontal(4);
-                    if (!nextIsMultiLotStart)
-                        s = s.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
-                    return s;
-                }
-                table.Cell().Element(NormalCell).Text(row.LotNumber.ToString());
-                table.Cell().Element(NormalCell).Text(row.TotalSkins.ToString("#,##0"));
-                table.Cell().Element(NormalCell).Text(BuildDescriptionText(row));
-                table.Cell().Element(NormalCell).Text("");
+                table.Cell().Element(BodyCell).Text(row.LotNumber.ToString());
+                table.Cell().Element(BodyCell).Text(row.TotalSkins.ToString("#,##0"));
+                table.Cell().Element(BodyCell).Text(BuildDescriptionText(row));
+                table.Cell().Element(BodyCell).Text("");
                 return;
             }
 
