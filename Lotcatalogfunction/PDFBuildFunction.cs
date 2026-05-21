@@ -397,17 +397,17 @@ namespace LotCatalogFunction
             if (!row.IsMultiLotString)
             {
                 return container
-                    .Border(0.5f)
+                    .BorderBottom(0.5f)
                     .BorderColor(Colors.Grey.Lighten1)
                     .Background(Colors.White)
                     .PaddingVertical(3)
                     .PaddingHorizontal(4);
             }
 
-            float top = row.LotSequenceInString == 1 ? 2f : 0.5f;
-            float bottom = row.IsLastLotInString ? 2f : 0.5f;
-            float left = isLeftEdge ? 2f : 0.5f;
-            float right = isRightEdge ? 2f : 0.5f;
+            float top = row.LotSequenceInString == 1 ? 2f : 0f;
+            float bottom = row.IsLastLotInString ? 2f : 0f;
+            float left = isLeftEdge ? 2f : 0f;
+            float right = isRightEdge ? 2f : 0f;
 
             return container
                 .BorderTop(top)
