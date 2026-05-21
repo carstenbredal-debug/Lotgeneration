@@ -402,7 +402,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                    text.Span("  [v8]").FontSize(6).FontColor(Colors.Grey.Lighten2);
+                    text.Span("  [BUILD-V9]");
                 });
         }
 
