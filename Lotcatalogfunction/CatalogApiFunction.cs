@@ -351,19 +351,24 @@ namespace LotCatalogFunction
                                                 .GroupBy(x => x.StringNumber)
                                                 .OrderBy(g => g.Min(x => x.CatalogSortOrder));
 
+                                            var allEntries = new List<(CatalogPdfRow row, bool isMultiLot, bool isFirst, bool isLast)>();
                                             foreach (var stringGroup in stringGroups)
                                             {
-                                                var rows = stringGroup
+                                                var grpRows = stringGroup
                                                     .OrderBy(x => x.CatalogSortOrder)
                                                     .ToList();
-                                                bool isMultiLot = rows.Any(r => r.IsMultiLotString);
+                                                bool isMultiLot = grpRows.Any(r => r.IsMultiLotString);
+                                                for (int i = 0; i < grpRows.Count; i++)
+                                                    allEntries.Add((grpRows[i], isMultiLot, i == 0, i == grpRows.Count - 1));
+                                            }
 
-                                                for (int i = 0; i < rows.Count; i++)
-                                                {
-                                                    bool isFirst = (i == 0);
-                                                    bool isLast = (i == rows.Count - 1);
-                                                    AddCatalogRow(table, rows[i], isMultiLot, isFirst, isLast);
-                                                }
+                                            for (int idx = 0; idx < allEntries.Count; idx++)
+                                            {
+                                                var (row, isMultiLot, isFirst, isLast) = allEntries[idx];
+                                                bool nextIsMultiLotStart = idx + 1 < allEntries.Count
+                                                    && allEntries[idx + 1].isMultiLot
+                                                    && allEntries[idx + 1].isFirst;
+                                                AddCatalogRow(table, row, isMultiLot, isFirst, isLast, nextIsMultiLotStart);
                                             }
                                         });
                                 }
@@ -453,14 +458,22 @@ namespace LotCatalogFunction
 
         private static void AddCatalogRow(
             TableDescriptor table, CatalogPdfRow row,
-            bool isMultiLot, bool isFirst, bool isLast)
+            bool isMultiLot, bool isFirst, bool isLast,
+            bool nextIsMultiLotStart = false)
         {
             if (!isMultiLot)
             {
-                table.Cell().Element(BodyCell).Text(row.LotNumber.ToString());
-                table.Cell().Element(BodyCell).Text(row.TotalSkins.ToString("#,##0"));
-                table.Cell().Element(BodyCell).Text(BuildDescriptionText(row));
-                table.Cell().Element(BodyCell).Text("");
+                IContainer NormalCell(IContainer c)
+                {
+                    var s = c.Background(Colors.White).PaddingVertical(3).PaddingHorizontal(4);
+                    if (!nextIsMultiLotStart)
+                        s = s.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
+                    return s;
+                }
+                table.Cell().Element(NormalCell).Text(row.LotNumber.ToString());
+                table.Cell().Element(NormalCell).Text(row.TotalSkins.ToString("#,##0"));
+                table.Cell().Element(NormalCell).Text(BuildDescriptionText(row));
+                table.Cell().Element(NormalCell).Text("");
                 return;
             }
 
@@ -485,7 +498,7 @@ namespace LotCatalogFunction
                 if (isLast)
                     container = container.BorderBottom(1.5f).BorderColor(Colors.Black);
                 else
-                    container = container.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
+                    container = container.BorderBottom(0.5f).BorderColor(Colors.Black);
                 if (col == 0)
                     container = container.BorderLeft(1.5f).BorderColor(Colors.Black);
                 if (col == 3)
