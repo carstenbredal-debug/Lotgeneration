@@ -200,7 +200,10 @@ namespace LotCatalogFunction
                                                 }
                                                 else
                                                 {
-                                                    AddCatalogRow(table, row);
+                                                    bool nextIsStringStart = i + 1 < sectionRows.Count
+                                                        && sectionRows[i + 1].IsMultiLotString
+                                                        && sectionRows[i + 1].LotSequenceInString == 1;
+                                                    AddCatalogRow(table, row, nextIsStringStart);
                                                     i++;
                                                 }
                                             }
@@ -282,26 +285,29 @@ namespace LotCatalogFunction
 
         private static void AddCatalogRow(
             TableDescriptor table,
-            CatalogPdfRow row)
+            CatalogPdfRow row,
+            bool nextIsStringStart = false)
         {
+            IContainer CellStyle(IContainer c) => nextIsStringStart ? NoBorderCell(c) : NormalCell(c);
+
             table.Cell()
-                .Element(NormalCell)
+                .Element(CellStyle)
                 .Text(BuildLotsText(row));
 
             table.Cell()
-                .Element(NormalCell)
+                .Element(CellStyle)
                 .Text(BuildSkinsText(row));
 
             table.Cell()
-                .Element(NormalCell)
+                .Element(CellStyle)
                 .Text(BuildDescriptionText(row));
 
             table.Cell()
-                .Element(NormalCell)
+                .Element(CellStyle)
                 .Text("");
 
             table.Cell()
-                .Element(NormalCell)
+                .Element(CellStyle)
                 .Text("");
         }
 
@@ -396,7 +402,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                    text.Span("  [v7]").FontSize(6).FontColor(Colors.Grey.Lighten2);
+                    text.Span("  [v8]").FontSize(6).FontColor(Colors.Grey.Lighten2);
                 });
         }
 
@@ -472,6 +478,14 @@ namespace LotCatalogFunction
             return container
                 .BorderBottom(0.5f)
                 .BorderColor(Colors.Grey.Lighten1)
+                .Background(Colors.White)
+                .PaddingVertical(3)
+                .PaddingHorizontal(4);
+        }
+
+        private static IContainer NoBorderCell(IContainer container)
+        {
+            return container
                 .Background(Colors.White)
                 .PaddingVertical(3)
                 .PaddingHorizontal(4);

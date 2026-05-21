@@ -1,0 +1,10 @@
+{
+  "description": {
+    "language": "dotnet-isolated",
+    "extensions": [ ".dll" ],
+    "defaultExecutablePath": "dotnet",
+    "defaultWorkerPath": "Lotcatalogfunction.dll",
+    "workerIndexing": "true",
+    "canUsePlaceholder": true
+  }
+}
