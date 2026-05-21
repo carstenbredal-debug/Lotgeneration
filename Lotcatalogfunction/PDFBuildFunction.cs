@@ -405,9 +405,16 @@ namespace LotCatalogFunction
         {
             if (!row.IsMultiLotString)
             {
-                float bottomBorder = nextIsStringStart ? 0f : 0.5f;
+                if (nextIsStringStart)
+                {
+                    return container
+                        .Background(Colors.White)
+                        .PaddingVertical(3)
+                        .PaddingHorizontal(4);
+                }
+
                 return container
-                    .BorderBottom(bottomBorder)
+                    .BorderBottom(0.5f)
                     .BorderColor(Colors.Grey.Lighten1)
                     .Background(Colors.White)
                     .PaddingVertical(3)
@@ -420,11 +427,11 @@ namespace LotCatalogFunction
             float right = isRightEdge ? 2f : 0f;
 
             return container
-                .BorderTop(top)
-                .BorderBottom(bottom)
-                .BorderLeft(left)
-                .BorderRight(right)
-                .BorderColor(Colors.Black)
+                .Background(Colors.Black)
+                .PaddingTop(top)
+                .PaddingBottom(bottom)
+                .PaddingLeft(left)
+                .PaddingRight(right)
                 .Background(Colors.White)
                 .PaddingVertical(3)
                 .PaddingHorizontal(4);
