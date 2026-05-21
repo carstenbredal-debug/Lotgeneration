@@ -487,29 +487,21 @@ namespace LotCatalogFunction
 
                 if (isMultiLot)
                 {
-                    // Two-layer border strategy:
-                    // Layer 1 (outer): thick BLACK borders on group edges + column separators
-                    // Layer 2 (inner): thin GREY bottom separators between rows (matching normal row style)
+                    // Single-layer borders, all BLACK at cell edge.
+                    // Outer edges (top/bottom/left/right of group): 1.5f
+                    // Inner row separators: 0.3f (thinner than normal rows'
+                    // 0.5f grey so black lines appear similar visual weight)
+                    // Inner column separators: 0.5f
                     IContainer c = cell;
-
-                    // --- Layer 1: thick BLACK structural borders ---
                     if (isFirst && !prevIsMultiLotEnd)
                         c = c.BorderTop(1.5f);
-                    if (isLast)
-                        c = c.BorderBottom(1.5f);
+                    c = c.BorderBottom(isLast ? 1.5f : 0.3f);
                     if (col == 0)
                         c = c.BorderLeft(1.5f);
                     c = c.BorderRight(col == 3 ? 1.5f : 0.5f);
-                    c = c.BorderColor(Colors.Black);
-
-                    // Background separates the two border layers
-                    c = c.Background(Colors.White);
-
-                    // --- Layer 2: thin GREY row separators (inside background) ---
-                    if (!isLast)
-                        c = c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
-
-                    c.PaddingVertical(3)
+                    c.BorderColor(Colors.Black)
+                     .Background(Colors.White)
+                     .PaddingVertical(3)
                      .PaddingHorizontal(4)
                      .Text(texts[col]);
                 }
@@ -570,7 +562,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                    text.Span("  [BUILD-V11]");
+                    text.Span("  [BUILD-V12]");
                 });
         }
 
