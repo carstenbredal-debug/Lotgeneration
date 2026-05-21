@@ -396,6 +396,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
+                    text.Span("  [v7]").FontSize(6).FontColor(Colors.Grey.Lighten2);
                 });
         }
 
