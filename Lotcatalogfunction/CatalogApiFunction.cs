@@ -487,29 +487,32 @@ namespace LotCatalogFunction
 
                 if (isMultiLot)
                 {
-                    // Two-layer border strategy:
-                    // Layer 1 (outer): thick BLACK borders on group edges + column separators
-                    // Layer 2 (inner): thin GREY bottom separators between rows (matching normal row style)
+                    // Thick BLACK borders on group outer edges,
+                    // thin GREY separators between rows inside group
+                    // (matching normal row separators exactly).
                     IContainer c = cell;
 
-                    // --- Layer 1: thick BLACK structural borders ---
+                    // Outer BLACK borders (group edges + column dividers)
                     if (isFirst && !prevIsMultiLotEnd)
                         c = c.BorderTop(1.5f);
                     if (isLast)
-                        c = c.BorderBottom(1.5f);
+                        c = c.BorderBottom(2f);
                     if (col == 0)
                         c = c.BorderLeft(1.5f);
                     c = c.BorderRight(col == 3 ? 1.5f : 0.5f);
                     c = c.BorderColor(Colors.Black);
 
-                    // Background separates the two border layers
-                    c = c.Background(Colors.White);
-
-                    // --- Layer 2: thin GREY row separators (inside background) ---
+                    // Inner GREY row separator (chain-break via Padding(0)
+                    // to create a separate border element with its own color)
                     if (!isLast)
-                        c = c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
+                    {
+                        c = c.Padding(0);
+                        c = c.BorderBottom(0.5f);
+                        c = c.BorderColor(Colors.Grey.Lighten1);
+                    }
 
-                    c.PaddingVertical(3)
+                    c.Background(Colors.White)
+                     .PaddingVertical(3)
                      .PaddingHorizontal(4)
                      .Text(texts[col]);
                 }
@@ -570,7 +573,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                    text.Span("  [BUILD-V11]");
+                    text.Span("  [BUILD-V13]");
                 });
         }
 
