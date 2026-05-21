@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace LotCatalogFunction
@@ -19,10 +20,32 @@ namespace LotCatalogFunction
     public class PDFBuildFunction
     {
         private readonly ILogger<PDFBuildFunction> _logger;
+        private const string FontName = "PPPangramSans";
+        private static bool _fontsRegistered;
 
         public PDFBuildFunction(ILogger<PDFBuildFunction> logger)
         {
             _logger = logger;
+        }
+
+        private static void RegisterFonts()
+        {
+            if (_fontsRegistered) return;
+
+            var basePath = AppContext.BaseDirectory;
+
+            var mediumPath = Path.Combine(basePath, "Assets", "PPPangramSans-Medium.otf");
+            var boldPath = Path.Combine(basePath, "Assets", "PPPangramSans-Bold.otf");
+
+            if (File.Exists(mediumPath))
+                using (var stream = File.OpenRead(mediumPath))
+                    QuestPDF.Drawing.FontManager.RegisterFont(stream);
+
+            if (File.Exists(boldPath))
+                using (var stream = File.OpenRead(boldPath))
+                    QuestPDF.Drawing.FontManager.RegisterFont(stream);
+
+            _fontsRegistered = true;
         }
 
         [Function("PDFBuildFunction")]
@@ -33,6 +56,7 @@ namespace LotCatalogFunction
             try
             {
                 QuestPDF.Settings.License = LicenseType.Community;
+                RegisterFonts();
 
                 var connectionString = ConnectionHelper.GetConnectionString();
 
@@ -101,8 +125,9 @@ namespace LotCatalogFunction
                     container.Page(page =>
                     {
                         page.Size(PageSizes.A4);
-
                         page.Margin(25);
+
+                        page.DefaultTextStyle(x => x.FontFamily(FontName));
 
                         page.Header().Element(x =>
                         {
