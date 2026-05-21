@@ -174,10 +174,17 @@ namespace LotCatalogFunction
                                                 AddColumnHeader(header);
                                             });
 
-                                            foreach (var row in section
-                                                .OrderBy(x => x.CatalogSortOrder))
+                                            var sectionRows = section
+                                                .OrderBy(x => x.CatalogSortOrder)
+                                                .ToList();
+
+                                            for (int i = 0; i < sectionRows.Count; i++)
                                             {
-                                                AddCatalogRow(table, row);
+                                                var row = sectionRows[i];
+                                                bool nextIsStringStart = i + 1 < sectionRows.Count
+                                                    && sectionRows[i + 1].IsMultiLotString
+                                                    && sectionRows[i + 1].LotSequenceInString == 1;
+                                                AddCatalogRow(table, row, nextIsStringStart);
                                             }
                                         });
                                 }
@@ -257,26 +264,27 @@ namespace LotCatalogFunction
 
         private static void AddCatalogRow(
             TableDescriptor table,
-            CatalogPdfRow row)
+            CatalogPdfRow row,
+            bool nextIsStringStart = false)
         {
             table.Cell()
-                .Element(x => MultiStringCell(x, row, isLeftEdge: true))
+                .Element(x => MultiStringCell(x, row, isLeftEdge: true, nextIsStringStart: nextIsStringStart))
                 .Text(BuildLotsText(row));
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row))
+                .Element(x => MultiStringCell(x, row, nextIsStringStart: nextIsStringStart))
                 .Text(BuildSkinsText(row));
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row))
+                .Element(x => MultiStringCell(x, row, nextIsStringStart: nextIsStringStart))
                 .Text(BuildDescriptionText(row));
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row))
+                .Element(x => MultiStringCell(x, row, nextIsStringStart: nextIsStringStart))
                 .Text("");
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row, isRightEdge: true))
+                .Element(x => MultiStringCell(x, row, isRightEdge: true, nextIsStringStart: nextIsStringStart))
                 .Text("");
         }
 
@@ -392,12 +400,14 @@ namespace LotCatalogFunction
             IContainer container,
             CatalogPdfRow row,
             bool isLeftEdge = false,
-            bool isRightEdge = false)
+            bool isRightEdge = false,
+            bool nextIsStringStart = false)
         {
             if (!row.IsMultiLotString)
             {
+                float bottomBorder = nextIsStringStart ? 0f : 0.5f;
                 return container
-                    .BorderBottom(0.5f)
+                    .BorderBottom(bottomBorder)
                     .BorderColor(Colors.Grey.Lighten1)
                     .Background(Colors.White)
                     .PaddingVertical(3)
