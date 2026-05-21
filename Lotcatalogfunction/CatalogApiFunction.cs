@@ -580,7 +580,7 @@ namespace LotCatalogFunction
         private static IContainer BodyCell(IContainer container)
         {
             return container
-                .BorderBottom(0.5f)
+                .Border(0.5f)
                 .BorderColor(Colors.Grey.Lighten1)
                 .Background(Colors.White)
                 .PaddingVertical(3)
