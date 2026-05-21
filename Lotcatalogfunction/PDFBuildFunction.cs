@@ -178,13 +178,31 @@ namespace LotCatalogFunction
                                                 .OrderBy(x => x.CatalogSortOrder)
                                                 .ToList();
 
-                                            for (int i = 0; i < sectionRows.Count; i++)
+                                            int i = 0;
+                                            while (i < sectionRows.Count)
                                             {
                                                 var row = sectionRows[i];
-                                                bool nextIsStringStart = i + 1 < sectionRows.Count
-                                                    && sectionRows[i + 1].IsMultiLotString
-                                                    && sectionRows[i + 1].LotSequenceInString == 1;
-                                                AddCatalogRow(table, row, nextIsStringStart);
+
+                                                if (row.IsMultiLotString && row.LotSequenceInString == 1)
+                                                {
+                                                    var groupRows = new List<CatalogPdfRow>();
+                                                    var stringNum = row.StringNumber;
+                                                    int j = i;
+                                                    while (j < sectionRows.Count
+                                                        && sectionRows[j].IsMultiLotString
+                                                        && sectionRows[j].StringNumber == stringNum)
+                                                    {
+                                                        groupRows.Add(sectionRows[j]);
+                                                        j++;
+                                                    }
+                                                    AddStringGroup(table, groupRows);
+                                                    i = j;
+                                                }
+                                                else
+                                                {
+                                                    AddCatalogRow(table, row);
+                                                    i++;
+                                                }
                                             }
                                         });
                                 }
@@ -264,28 +282,80 @@ namespace LotCatalogFunction
 
         private static void AddCatalogRow(
             TableDescriptor table,
-            CatalogPdfRow row,
-            bool nextIsStringStart = false)
+            CatalogPdfRow row)
         {
             table.Cell()
-                .Element(x => MultiStringCell(x, row, isLeftEdge: true, nextIsStringStart: nextIsStringStart))
+                .Element(NormalCell)
                 .Text(BuildLotsText(row));
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row, nextIsStringStart: nextIsStringStart))
+                .Element(NormalCell)
                 .Text(BuildSkinsText(row));
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row, nextIsStringStart: nextIsStringStart))
+                .Element(NormalCell)
                 .Text(BuildDescriptionText(row));
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row, nextIsStringStart: nextIsStringStart))
+                .Element(NormalCell)
                 .Text("");
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row, isRightEdge: true, nextIsStringStart: nextIsStringStart))
+                .Element(NormalCell)
                 .Text("");
+        }
+
+        private static void AddStringGroup(
+            TableDescriptor table,
+            List<CatalogPdfRow> groupRows)
+        {
+            table.Cell().ColumnSpan(5)
+                .Border(2f)
+                .BorderColor(Colors.Black)
+                .Table(innerTable =>
+                {
+                    innerTable.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(70);
+                        columns.ConstantColumn(55);
+                        columns.RelativeColumn();
+                        columns.ConstantColumn(60);
+                        columns.ConstantColumn(90);
+                    });
+
+                    foreach (var row in groupRows)
+                    {
+                        innerTable.Cell()
+                            .Background(Colors.White)
+                            .PaddingVertical(3)
+                            .PaddingHorizontal(4)
+                            .Text(BuildLotsText(row));
+
+                        innerTable.Cell()
+                            .Background(Colors.White)
+                            .PaddingVertical(3)
+                            .PaddingHorizontal(4)
+                            .Text(BuildSkinsText(row));
+
+                        innerTable.Cell()
+                            .Background(Colors.White)
+                            .PaddingVertical(3)
+                            .PaddingHorizontal(4)
+                            .Text(BuildDescriptionText(row));
+
+                        innerTable.Cell()
+                            .Background(Colors.White)
+                            .PaddingVertical(3)
+                            .PaddingHorizontal(4)
+                            .Text("");
+
+                        innerTable.Cell()
+                            .Background(Colors.White)
+                            .PaddingVertical(3)
+                            .PaddingHorizontal(4)
+                            .Text("");
+                    }
+                });
         }
 
         private static void ComposeHeader(IContainer container)
@@ -396,42 +466,11 @@ namespace LotCatalogFunction
             );
         }
 
-        private static IContainer MultiStringCell(
-            IContainer container,
-            CatalogPdfRow row,
-            bool isLeftEdge = false,
-            bool isRightEdge = false,
-            bool nextIsStringStart = false)
+        private static IContainer NormalCell(IContainer container)
         {
-            if (!row.IsMultiLotString)
-            {
-                if (nextIsStringStart)
-                {
-                    return container
-                        .Background(Colors.White)
-                        .PaddingVertical(3)
-                        .PaddingHorizontal(4);
-                }
-
-                return container
-                    .BorderBottom(0.5f)
-                    .BorderColor(Colors.Grey.Lighten1)
-                    .Background(Colors.White)
-                    .PaddingVertical(3)
-                    .PaddingHorizontal(4);
-            }
-
-            float top = row.LotSequenceInString == 1 ? 2f : 0f;
-            float bottom = row.IsLastLotInString ? 2f : 0f;
-            float left = isLeftEdge ? 2f : 0f;
-            float right = isRightEdge ? 2f : 0f;
-
             return container
-                .Background(Colors.Black)
-                .PaddingTop(top)
-                .PaddingBottom(bottom)
-                .PaddingLeft(left)
-                .PaddingRight(right)
+                .BorderBottom(0.5f)
+                .BorderColor(Colors.Grey.Lighten1)
                 .Background(Colors.White)
                 .PaddingVertical(3)
                 .PaddingHorizontal(4);
