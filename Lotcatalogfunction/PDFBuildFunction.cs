@@ -507,4 +507,4 @@ namespace LotCatalogFunction
                 .PaddingHorizontal(4);
         }
     }
-}
+}// deployment trigger
