@@ -487,29 +487,28 @@ namespace LotCatalogFunction
 
                 if (isMultiLot)
                 {
-                    // Thick BLACK borders on group outer edges,
-                    // thin GREY separators between rows inside group
-                    // (matching normal row separators exactly).
+                    // Layer 1 (outer): GREY row separator at cell edge
+                    // so it spans full cell width, matching normal rows.
+                    // Layer 2 (inner): thick BLACK group borders.
                     IContainer c = cell;
 
-                    // Outer BLACK borders (group edges + column dividers)
+                    // Outer GREY separator (full cell width)
+                    if (!isLast)
+                    {
+                        c = c.BorderBottom(0.5f);
+                        c = c.BorderColor(Colors.Grey.Lighten1);
+                        c = c.Padding(0); // chain-break
+                    }
+
+                    // Inner BLACK borders (group edges + column dividers)
                     if (isFirst && !prevIsMultiLotEnd)
                         c = c.BorderTop(1.5f);
                     if (isLast)
-                        c = c.BorderBottom(2f);
+                        c = c.BorderBottom(2.5f);
                     if (col == 0)
                         c = c.BorderLeft(1.5f);
                     c = c.BorderRight(col == 3 ? 1.5f : 0.5f);
                     c = c.BorderColor(Colors.Black);
-
-                    // Inner GREY row separator (chain-break via Padding(0)
-                    // to create a separate border element with its own color)
-                    if (!isLast)
-                    {
-                        c = c.Padding(0);
-                        c = c.BorderBottom(0.5f);
-                        c = c.BorderColor(Colors.Grey.Lighten1);
-                    }
 
                     c.Background(Colors.White)
                      .PaddingVertical(3)
@@ -573,7 +572,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                    text.Span("  [BUILD-V13]");
+                    text.Span("  [BUILD-V14]");
                 });
         }
 
