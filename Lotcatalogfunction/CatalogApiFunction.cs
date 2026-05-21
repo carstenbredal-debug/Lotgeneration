@@ -353,10 +353,18 @@ namespace LotCatalogFunction
 
                                             foreach (var stringGroup in stringGroups)
                                             {
-                                                table.Cell()
+                                                bool isMultiLot = stringGroup.Any(r => r.IsMultiLotString);
+
+                                                var outerCell = table.Cell()
                                                     .ColumnSpan(4)
-                                                    .Element(x => x.ShowEntire())
-                                                    .Table(innerTable =>
+                                                    .Element(x => x.ShowEntire());
+
+                                                if (isMultiLot)
+                                                    outerCell = outerCell
+                                                        .Border(1.5f)
+                                                        .BorderColor(Colors.Black);
+
+                                                outerCell.Table(innerTable =>
                                                     {
                                                         innerTable.ColumnsDefinition(columns =>
                                                         {
@@ -369,7 +377,7 @@ namespace LotCatalogFunction
                                                         foreach (var row in stringGroup
                                                             .OrderBy(x => x.CatalogSortOrder))
                                                         {
-                                                            AddCatalogRow(innerTable, row);
+                                                            AddCatalogRow(innerTable, row, isMultiLot);
                                                         }
                                                     });
                                             }
@@ -459,52 +467,28 @@ namespace LotCatalogFunction
             table.Cell().Element(HeaderCell).Text("Comments").Bold();
         }
 
-        private static void AddCatalogRow(TableDescriptor table, CatalogPdfRow row)
+        private static void AddCatalogRow(TableDescriptor table, CatalogPdfRow row, bool isMultiLot = false)
         {
+            IContainer CellStyle(IContainer c) => isMultiLot ? NoBorderCell(c) : BodyCell(c);
+
             table.Cell()
-                .Element(x => MultiStringCell(x, row, isLeftEdge: true))
+                .Element(CellStyle)
                 .Text(row.LotNumber.ToString());
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row))
+                .Element(CellStyle)
                 .Text(row.TotalSkins.ToString("#,##0"));
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row, isRightEdge: true))
+                .Element(CellStyle)
                 .Text(BuildDescriptionText(row));
 
             table.Cell()
-                .Element(BodyCell)
+                .Element(CellStyle)
                 .Text("");
         }
 
-        private static IContainer MultiStringCell(
-            IContainer container, CatalogPdfRow row,
-            bool isLeftEdge = false, bool isRightEdge = false)
-        {
-            var cell = container
-                .Border(0.5f)
-                .BorderColor(Colors.Grey.Lighten1)
-                .Background(Colors.White)
-                .PaddingVertical(3)
-                .PaddingHorizontal(4);
 
-            if (!row.IsMultiLotString) return cell;
-
-            if (row.LotSequenceInString == 1)
-                cell = cell.BorderTop(1.25f).BorderColor(Colors.Black);
-
-            if (row.IsLastLotInString)
-                cell = cell.BorderBottom(1.25f).BorderColor(Colors.Black);
-
-            if (isLeftEdge)
-                cell = cell.BorderLeft(1.25f).BorderColor(Colors.Black);
-
-            if (isRightEdge)
-                cell = cell.BorderRight(1.25f).BorderColor(Colors.Black);
-
-            return cell;
-        }
 
         private static void ComposeHeader(IContainer container)
         {
@@ -541,6 +525,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
+                    text.Span("  [BUILD-V9]");
                 });
         }
 
@@ -584,10 +569,18 @@ namespace LotCatalogFunction
                 .PaddingHorizontal(4);
         }
 
+        private static IContainer NoBorderCell(IContainer container)
+        {
+            return container
+                .Background(Colors.White)
+                .PaddingVertical(3)
+                .PaddingHorizontal(4);
+        }
+
         private static IContainer BodyCell(IContainer container)
         {
             return container
-                .Border(0.5f)
+                .BorderBottom(0.5f)
                 .BorderColor(Colors.Grey.Lighten1)
                 .Background(Colors.White)
                 .PaddingVertical(3)
