@@ -389,47 +389,45 @@ namespace LotCatalogFunction
             bool isLeftEdge = false,
             bool isRightEdge = false)
         {
-            var cell = container
-                .Border(0.5f)
-                .BorderColor(Colors.Grey.Lighten1)
-                .Background(Colors.White)
-                .PaddingVertical(3)
-                .PaddingHorizontal(4);
-
             if (!row.IsMultiLotString)
             {
-                return cell;
+                return container
+                    .Border(0.5f)
+                    .BorderColor(Colors.Grey.Lighten1)
+                    .Background(Colors.White)
+                    .PaddingVertical(3)
+                    .PaddingHorizontal(4);
             }
+
+            var cell = container
+                .Border(0)
+                .Background(Colors.White);
 
             if (row.LotSequenceInString == 1)
-            {
-                cell = cell
-                    .BorderTop(1.25f)
-                    .BorderColor(Colors.Black);
-            }
+                cell = cell.BorderTop(1.5f);
+            else
+                cell = cell.BorderTop(0.5f);
 
             if (row.IsLastLotInString)
-            {
-                cell = cell
-                    .BorderBottom(1.25f)
-                    .BorderColor(Colors.Black);
-            }
+                cell = cell.BorderBottom(1.5f);
+            else
+                cell = cell.BorderBottom(0.5f);
 
             if (isLeftEdge)
-            {
-                cell = cell
-                    .BorderLeft(1.25f)
-                    .BorderColor(Colors.Black);
-            }
+                cell = cell.BorderLeft(1.5f);
+            else
+                cell = cell.BorderLeft(0.5f);
 
             if (isRightEdge)
-            {
-                cell = cell
-                    .BorderRight(1.25f)
-                    .BorderColor(Colors.Black);
-            }
+                cell = cell.BorderRight(1.5f);
+            else
+                cell = cell.BorderRight(0.5f);
 
-            return cell;
+            cell = cell.BorderColor(Colors.Black);
+
+            return cell
+                .PaddingVertical(3)
+                .PaddingHorizontal(4);
         }
 
         private static IContainer HeaderCell(IContainer container)
