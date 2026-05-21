@@ -469,7 +469,7 @@ namespace LotCatalogFunction
 
         private static void AddCatalogRow(TableDescriptor table, CatalogPdfRow row, bool isMultiLot = false)
         {
-            IContainer CellStyle(IContainer c) => isMultiLot ? NoBorderCell(c) : BodyCell(c);
+            IContainer CellStyle(IContainer c) => isMultiLot ? StringCell(c) : BodyCell(c);
 
             table.Cell()
                 .Element(CellStyle)
@@ -569,9 +569,11 @@ namespace LotCatalogFunction
                 .PaddingHorizontal(4);
         }
 
-        private static IContainer NoBorderCell(IContainer container)
+        private static IContainer StringCell(IContainer container)
         {
             return container
+                .BorderBottom(0.5f)
+                .BorderColor(Colors.Grey.Lighten1)
                 .Background(Colors.White)
                 .PaddingVertical(3)
                 .PaddingHorizontal(4);
