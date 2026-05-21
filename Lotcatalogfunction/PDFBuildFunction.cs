@@ -172,32 +172,10 @@ namespace LotCatalogFunction
                                                 AddColumnHeader(header);
                                             });
 
-                                            var stringGroups = section
-                                                .GroupBy(x => x.StringNumber)
-                                                .OrderBy(g => g.Min(x => x.CatalogSortOrder));
-
-                                            foreach (var stringGroup in stringGroups)
+                                            foreach (var row in section
+                                                .OrderBy(x => x.CatalogSortOrder))
                                             {
-                                                table.Cell()
-                                                    .ColumnSpan(5)
-                                                    .Element(x => x.ShowEntire())
-                                                    .Table(innerTable =>
-                                                    {
-                                                        innerTable.ColumnsDefinition(columns =>
-                                                        {
-                                                            columns.ConstantColumn(70);
-                                                            columns.ConstantColumn(55);
-                                                            columns.RelativeColumn();
-                                                            columns.ConstantColumn(60);
-                                                            columns.ConstantColumn(90);
-                                                        });
-
-                                                        foreach (var row in stringGroup
-                                                            .OrderBy(x => x.CatalogSortOrder))
-                                                        {
-                                                            AddCatalogRow(innerTable, row);
-                                                        }
-                                                    });
+                                                AddCatalogRow(table, row);
                                             }
                                         });
                                 }
