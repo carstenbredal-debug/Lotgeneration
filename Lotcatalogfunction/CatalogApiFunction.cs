@@ -368,7 +368,10 @@ namespace LotCatalogFunction
                                                 bool nextIsMultiLotStart = idx + 1 < allEntries.Count
                                                     && allEntries[idx + 1].isMultiLot
                                                     && allEntries[idx + 1].isFirst;
-                                                AddCatalogRow(table, row, isMultiLot, isFirst, isLast, nextIsMultiLotStart);
+                                                bool prevIsMultiLotEnd = idx - 1 >= 0
+                                                    && allEntries[idx - 1].isMultiLot
+                                                    && allEntries[idx - 1].isLast;
+                                                AddCatalogRow(table, row, isMultiLot, isFirst, isLast, nextIsMultiLotStart, prevIsMultiLotEnd);
                                             }
                                         });
                                 }
@@ -459,14 +462,25 @@ namespace LotCatalogFunction
         private static void AddCatalogRow(
             TableDescriptor table, CatalogPdfRow row,
             bool isMultiLot, bool isFirst, bool isLast,
-            bool nextIsMultiLotStart = false)
+            bool nextIsMultiLotStart = false, bool prevIsMultiLotEnd = false)
         {
             if (!isMultiLot)
             {
-                table.Cell().Element(BodyCell).Text(row.LotNumber.ToString());
-                table.Cell().Element(BodyCell).Text(row.TotalSkins.ToString("#,##0"));
-                table.Cell().Element(BodyCell).Text(BuildDescriptionText(row));
-                table.Cell().Element(BodyCell).Text("");
+                IContainer NormalCell(IContainer c)
+                {
+                    var s = c.Background(Colors.White).PaddingVertical(3).PaddingHorizontal(4);
+                    if (!prevIsMultiLotEnd)
+                        s = s.BorderTop(0.5f).BorderColor(Colors.Grey.Lighten1);
+                    if (!nextIsMultiLotStart)
+                        s = s.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
+                    s = s.BorderLeft(0.5f).BorderColor(Colors.Grey.Lighten1);
+                    s = s.BorderRight(0.5f).BorderColor(Colors.Grey.Lighten1);
+                    return s;
+                }
+                table.Cell().Element(NormalCell).Text(row.LotNumber.ToString());
+                table.Cell().Element(NormalCell).Text(row.TotalSkins.ToString("#,##0"));
+                table.Cell().Element(NormalCell).Text(BuildDescriptionText(row));
+                table.Cell().Element(NormalCell).Text("");
                 return;
             }
 
