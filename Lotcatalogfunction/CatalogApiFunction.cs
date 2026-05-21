@@ -487,27 +487,30 @@ namespace LotCatalogFunction
 
                 if (isMultiLot)
                 {
-                    // Layer 1 (outer): GREY row separator at cell edge
-                    // so it spans full cell width, matching normal rows.
-                    // Layer 2 (inner): thick BLACK group borders.
+                    // Layer 1 (outer): GREY 0.5f borders (inner separators + column dividers)
+                    // Layer 2 (inner): BLACK 0.75f borders (group perimeter only)
                     IContainer c = cell;
 
-                    // Outer GREY separator (full cell width)
-                    if (!isLast)
-                    {
+                    bool hasGreyBottom = !isLast;
+                    bool hasGreyRight = col < 3;
+                    if (hasGreyBottom)
                         c = c.BorderBottom(0.5f);
+                    if (hasGreyRight)
+                        c = c.BorderRight(0.5f);
+                    if (hasGreyBottom || hasGreyRight)
+                    {
                         c = c.BorderColor(Colors.Grey.Lighten1);
                         c = c.Padding(0); // chain-break
                     }
 
-                    // Inner BLACK borders (group edges + column dividers)
                     if (isFirst && !prevIsMultiLotEnd)
-                        c = c.BorderTop(1.5f);
+                        c = c.BorderTop(0.75f);
                     if (isLast)
-                        c = c.BorderBottom(3f);
+                        c = c.BorderBottom(0.75f);
                     if (col == 0)
-                        c = c.BorderLeft(1.5f);
-                    c = c.BorderRight(col == 3 ? 1.5f : 0.5f);
+                        c = c.BorderLeft(0.75f);
+                    if (col == 3)
+                        c = c.BorderRight(0.75f);
                     c = c.BorderColor(Colors.Black);
 
                     c.Background(Colors.White)
@@ -572,7 +575,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                    text.Span("  [BUILD-V15]");
+                    text.Span("  [BUILD-V17]");
                 });
         }
 
