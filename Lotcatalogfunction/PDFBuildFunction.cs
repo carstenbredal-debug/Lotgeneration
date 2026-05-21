@@ -1,4 +1,5 @@
 // PDF catalog generation with PPangramSans font and string grouping borders
+// Auto-deployed via GitHub Actions
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Data.SqlClient;
