@@ -504,7 +504,7 @@ namespace LotCatalogFunction
                     if (isFirst && !prevIsMultiLotEnd)
                         c = c.BorderTop(1.5f);
                     if (isLast)
-                        c = c.BorderBottom(2.5f);
+                        c = c.BorderBottom(3f);
                     if (col == 0)
                         c = c.BorderLeft(1.5f);
                     c = c.BorderRight(col == 3 ? 1.5f : 0.5f);
@@ -572,7 +572,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                    text.Span("  [BUILD-V14]");
+                    text.Span("  [BUILD-V15]");
                 });
         }
 
