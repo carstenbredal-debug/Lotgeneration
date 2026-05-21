@@ -368,8 +368,12 @@ namespace LotCatalogFunction
                                                 bool nextIsMultiLotStart = idx + 1 < allEntries.Count
                                                     && allEntries[idx + 1].isMultiLot
                                                     && allEntries[idx + 1].isFirst;
+                                                bool prevIsMultiLotEnd = idx > 0
+                                                    && allEntries[idx - 1].isMultiLot
+                                                    && allEntries[idx - 1].isLast;
                                                 AddCatalogRow(table, row, isMultiLot, isFirst, isLast,
-                                                    nextIsMultiLotStart, isFirstEntry: idx == 0);
+                                                    nextIsMultiLotStart, isFirstEntry: idx == 0,
+                                                    prevIsMultiLotEnd: prevIsMultiLotEnd);
                                             }
                                         });
                                 }
@@ -460,12 +464,14 @@ namespace LotCatalogFunction
         private static void AddCatalogRow(
             TableDescriptor table, CatalogPdfRow row,
             bool isMultiLot, bool isFirst, bool isLast,
-            bool nextIsMultiLotStart = false, bool isFirstEntry = false)
+            bool nextIsMultiLotStart = false, bool isFirstEntry = false,
+            bool prevIsMultiLotEnd = false)
         {
-            // Border strategy: NEVER use BorderTop or BorderLeft (col>0).
-            // Use only BorderBottom + BorderRight (+ BorderLeft on col 0).
-            // This prevents QuestPDF from stacking two borders on shared edges.
-            // The thick "top" of a string group = thick "bottom" of the row above it.
+            // Border strategy (v10): borders BEFORE background/padding so they
+            // render at the cell edge, not floating inside the padding.
+            // Each shared edge has exactly ONE border element.
+            // String group borders: all BLACK, different thicknesses.
+            // Normal row borders: all GREY, uniform 0.5f.
 
             string[] texts =
             {
@@ -478,44 +484,43 @@ namespace LotCatalogFunction
             for (int col = 0; col < 4; col++)
             {
                 var cell = table.Cell();
-                var c = cell
-                    .Background(Colors.White)
-                    .PaddingVertical(3)
-                    .PaddingHorizontal(4);
 
-                if (!isMultiLot)
+                if (isMultiLot)
                 {
-                    // Normal row: thin grey grid
+                    // String group: all borders BLACK at cell edge.
+                    // Top: thick on first row (unless prev row already drew thick bottom).
+                    // Bottom: thick on last row, thin separator on inner rows.
+                    // Left/Right: thick on outer columns, thin on inner.
+                    IContainer c = cell;
+                    if (isFirst && !prevIsMultiLotEnd)
+                        c = c.BorderTop(1.5f);
+                    c = c.BorderBottom(isLast ? 1.5f : 0.5f);
                     if (col == 0)
-                        c = c.BorderLeft(0.5f).BorderColor(Colors.Grey.Lighten1);
-                    c = c.BorderRight(0.5f).BorderColor(Colors.Grey.Lighten1);
-
-                    if (nextIsMultiLotStart)
-                        c = c.BorderBottom(1.5f).BorderColor(Colors.Black);
-                    else
-                        c = c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
+                        c = c.BorderLeft(1.5f);
+                    c = c.BorderRight(col == 3 ? 1.5f : 0.5f);
+                    c.BorderColor(Colors.Black)
+                     .Background(Colors.White)
+                     .PaddingVertical(3)
+                     .PaddingHorizontal(4)
+                     .Text(texts[col]);
                 }
                 else
                 {
-                    // String group row: thick black outer, thin grey inner
-                    if (isFirst && isFirstEntry)
-                        c = c.BorderTop(1.5f).BorderColor(Colors.Black);
-
+                    // Normal row: thin grey borders at cell edge.
+                    // Suppress bottom border when next row starts a string group
+                    // (the string group's own BorderTop handles that edge).
+                    IContainer c = cell;
                     if (col == 0)
-                        c = c.BorderLeft(1.5f).BorderColor(Colors.Black);
-
-                    if (col == 3)
-                        c = c.BorderRight(1.5f).BorderColor(Colors.Black);
-                    else
-                        c = c.BorderRight(0.5f).BorderColor(Colors.Grey.Lighten1);
-
-                    if (isLast)
-                        c = c.BorderBottom(1.5f).BorderColor(Colors.Black);
-                    else
-                        c = c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
+                        c = c.BorderLeft(0.5f);
+                    c = c.BorderRight(0.5f);
+                    if (!nextIsMultiLotStart)
+                        c = c.BorderBottom(0.5f);
+                    c.BorderColor(Colors.Grey.Lighten1)
+                     .Background(Colors.White)
+                     .PaddingVertical(3)
+                     .PaddingHorizontal(4)
+                     .Text(texts[col]);
                 }
-
-                c.Text(texts[col]);
             }
         }
 
@@ -556,7 +561,7 @@ namespace LotCatalogFunction
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                    text.Span("  [BUILD-V9]");
+                    text.Span("  [BUILD-V10]");
                 });
         }
 
