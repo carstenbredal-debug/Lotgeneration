@@ -368,10 +368,8 @@ namespace LotCatalogFunction
                                                 bool nextIsMultiLotStart = idx + 1 < allEntries.Count
                                                     && allEntries[idx + 1].isMultiLot
                                                     && allEntries[idx + 1].isFirst;
-                                                bool prevIsMultiLotEnd = idx - 1 >= 0
-                                                    && allEntries[idx - 1].isMultiLot
-                                                    && allEntries[idx - 1].isLast;
-                                                AddCatalogRow(table, row, isMultiLot, isFirst, isLast, nextIsMultiLotStart, prevIsMultiLotEnd);
+                                                AddCatalogRow(table, row, isMultiLot, isFirst, isLast,
+                                                    nextIsMultiLotStart, isFirstEntry: idx == 0);
                                             }
                                         });
                                 }
@@ -462,56 +460,62 @@ namespace LotCatalogFunction
         private static void AddCatalogRow(
             TableDescriptor table, CatalogPdfRow row,
             bool isMultiLot, bool isFirst, bool isLast,
-            bool nextIsMultiLotStart = false, bool prevIsMultiLotEnd = false)
+            bool nextIsMultiLotStart = false, bool isFirstEntry = false)
         {
-            if (!isMultiLot)
+            // Border strategy: NEVER use BorderTop or BorderLeft (col>0).
+            // Use only BorderBottom + BorderRight (+ BorderLeft on col 0).
+            // This prevents QuestPDF from stacking two borders on shared edges.
+            // The thick "top" of a string group = thick "bottom" of the row above it.
+
+            string[] texts =
             {
-                IContainer NormalCell(IContainer c)
-                {
-                    var s = c.Background(Colors.White).PaddingVertical(3).PaddingHorizontal(4);
-                    if (!prevIsMultiLotEnd)
-                        s = s.BorderTop(0.5f).BorderColor(Colors.Grey.Lighten1);
-                    if (!nextIsMultiLotStart)
-                        s = s.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
-                    s = s.BorderLeft(0.5f).BorderColor(Colors.Grey.Lighten1);
-                    s = s.BorderRight(0.5f).BorderColor(Colors.Grey.Lighten1);
-                    return s;
-                }
-                table.Cell().Element(NormalCell).Text(row.LotNumber.ToString());
-                table.Cell().Element(NormalCell).Text(row.TotalSkins.ToString("#,##0"));
-                table.Cell().Element(NormalCell).Text(BuildDescriptionText(row));
-                table.Cell().Element(NormalCell).Text("");
-                return;
-            }
+                row.LotNumber.ToString(),
+                row.TotalSkins.ToString("#,##0"),
+                BuildDescriptionText(row),
+                ""
+            };
 
             for (int col = 0; col < 4; col++)
             {
-                string text = col switch
-                {
-                    0 => row.LotNumber.ToString(),
-                    1 => row.TotalSkins.ToString("#,##0"),
-                    2 => BuildDescriptionText(row),
-                    _ => ""
-                };
-
                 var cell = table.Cell();
-                var container = cell
+                var c = cell
                     .Background(Colors.White)
                     .PaddingVertical(3)
                     .PaddingHorizontal(4);
 
-                if (isFirst)
-                    container = container.BorderTop(1.5f).BorderColor(Colors.Black);
-                if (isLast)
-                    container = container.BorderBottom(1.5f).BorderColor(Colors.Black);
-                else
-                    container = container.BorderBottom(0.5f).BorderColor(Colors.Black);
-                if (col == 0)
-                    container = container.BorderLeft(1.5f).BorderColor(Colors.Black);
-                if (col == 3)
-                    container = container.BorderRight(1.5f).BorderColor(Colors.Black);
+                if (!isMultiLot)
+                {
+                    // Normal row: thin grey grid
+                    if (col == 0)
+                        c = c.BorderLeft(0.5f).BorderColor(Colors.Grey.Lighten1);
+                    c = c.BorderRight(0.5f).BorderColor(Colors.Grey.Lighten1);
 
-                container.Text(text);
+                    if (nextIsMultiLotStart)
+                        c = c.BorderBottom(1.5f).BorderColor(Colors.Black);
+                    else
+                        c = c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
+                }
+                else
+                {
+                    // String group row: thick black outer, thin grey inner
+                    if (isFirst && isFirstEntry)
+                        c = c.BorderTop(1.5f).BorderColor(Colors.Black);
+
+                    if (col == 0)
+                        c = c.BorderLeft(1.5f).BorderColor(Colors.Black);
+
+                    if (col == 3)
+                        c = c.BorderRight(1.5f).BorderColor(Colors.Black);
+                    else
+                        c = c.BorderRight(0.5f).BorderColor(Colors.Grey.Lighten1);
+
+                    if (isLast)
+                        c = c.BorderBottom(1.5f).BorderColor(Colors.Black);
+                    else
+                        c = c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten1);
+                }
+
+                c.Text(texts[col]);
             }
         }
 
