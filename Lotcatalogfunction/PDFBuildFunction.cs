@@ -270,11 +270,11 @@ namespace LotCatalogFunction
                 .Text(BuildDescriptionText(row));
 
             table.Cell()
-                .Element(x => MultiStringCell(x, row, isRightEdge: true))
+                .Element(x => MultiStringCell(x, row))
                 .Text("");
 
             table.Cell()
-                .Element(BodyCell)
+                .Element(x => MultiStringCell(x, row, isRightEdge: true))
                 .Text("");
         }
 
@@ -402,33 +402,18 @@ namespace LotCatalogFunction
                     .PaddingHorizontal(4);
             }
 
-            var cell = container
-                .Border(0)
-                .Background(Colors.White);
+            float top = row.LotSequenceInString == 1 ? 2f : 0.5f;
+            float bottom = row.IsLastLotInString ? 2f : 0.5f;
+            float left = isLeftEdge ? 2f : 0.5f;
+            float right = isRightEdge ? 2f : 0.5f;
 
-            if (row.LotSequenceInString == 1)
-                cell = cell.BorderTop(1.5f);
-            else
-                cell = cell.BorderTop(0.5f);
-
-            if (row.IsLastLotInString)
-                cell = cell.BorderBottom(1.5f);
-            else
-                cell = cell.BorderBottom(0.5f);
-
-            if (isLeftEdge)
-                cell = cell.BorderLeft(1.5f);
-            else
-                cell = cell.BorderLeft(0.5f);
-
-            if (isRightEdge)
-                cell = cell.BorderRight(1.5f);
-            else
-                cell = cell.BorderRight(0.5f);
-
-            cell = cell.BorderColor(Colors.Black);
-
-            return cell
+            return container
+                .BorderTop(top)
+                .BorderBottom(bottom)
+                .BorderLeft(left)
+                .BorderRight(right)
+                .BorderColor(Colors.Black)
+                .Background(Colors.White)
                 .PaddingVertical(3)
                 .PaddingHorizontal(4);
         }
