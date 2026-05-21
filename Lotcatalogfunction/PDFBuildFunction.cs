@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace LotCatalogFunction
@@ -19,10 +20,32 @@ namespace LotCatalogFunction
     public class PDFBuildFunction
     {
         private readonly ILogger<PDFBuildFunction> _logger;
+        private const string FontName = "PPPangramSans";
+        private static bool _fontsRegistered;
 
         public PDFBuildFunction(ILogger<PDFBuildFunction> logger)
         {
             _logger = logger;
+        }
+
+        private static void RegisterFonts()
+        {
+            if (_fontsRegistered) return;
+
+            var basePath = AppContext.BaseDirectory;
+
+            var mediumPath = Path.Combine(basePath, "Assets", "PPPangramSans-Medium.otf");
+            var boldPath = Path.Combine(basePath, "Assets", "PPPangramSans-Bold.otf");
+
+            if (File.Exists(mediumPath))
+                using (var stream = File.OpenRead(mediumPath))
+                    QuestPDF.Drawing.FontManager.RegisterFont(stream);
+
+            if (File.Exists(boldPath))
+                using (var stream = File.OpenRead(boldPath))
+                    QuestPDF.Drawing.FontManager.RegisterFont(stream);
+
+            _fontsRegistered = true;
         }
 
         [Function("PDFBuildFunction")]
@@ -33,6 +56,7 @@ namespace LotCatalogFunction
             try
             {
                 QuestPDF.Settings.License = LicenseType.Community;
+                RegisterFonts();
 
                 var connectionString = ConnectionHelper.GetConnectionString();
 
@@ -101,8 +125,9 @@ namespace LotCatalogFunction
                     container.Page(page =>
                     {
                         page.Size(PageSizes.A4);
-
                         page.Margin(25);
+
+                        page.DefaultTextStyle(x => x.FontFamily(FontName));
 
                         page.Header().Element(x =>
                         {
@@ -389,47 +414,45 @@ namespace LotCatalogFunction
             bool isLeftEdge = false,
             bool isRightEdge = false)
         {
-            var cell = container
-                .Border(0.5f)
-                .BorderColor(Colors.Grey.Lighten1)
-                .Background(Colors.White)
-                .PaddingVertical(3)
-                .PaddingHorizontal(4);
-
             if (!row.IsMultiLotString)
             {
-                return cell;
+                return container
+                    .Border(0.5f)
+                    .BorderColor(Colors.Grey.Lighten1)
+                    .Background(Colors.White)
+                    .PaddingVertical(3)
+                    .PaddingHorizontal(4);
             }
+
+            var cell = container
+                .Border(0)
+                .Background(Colors.White);
 
             if (row.LotSequenceInString == 1)
-            {
-                cell = cell
-                    .BorderTop(1.25f)
-                    .BorderColor(Colors.Black);
-            }
+                cell = cell.BorderTop(1.5f);
+            else
+                cell = cell.BorderTop(0.5f);
 
             if (row.IsLastLotInString)
-            {
-                cell = cell
-                    .BorderBottom(1.25f)
-                    .BorderColor(Colors.Black);
-            }
+                cell = cell.BorderBottom(1.5f);
+            else
+                cell = cell.BorderBottom(0.5f);
 
             if (isLeftEdge)
-            {
-                cell = cell
-                    .BorderLeft(1.25f)
-                    .BorderColor(Colors.Black);
-            }
+                cell = cell.BorderLeft(1.5f);
+            else
+                cell = cell.BorderLeft(0.5f);
 
             if (isRightEdge)
-            {
-                cell = cell
-                    .BorderRight(1.25f)
-                    .BorderColor(Colors.Black);
-            }
+                cell = cell.BorderRight(1.5f);
+            else
+                cell = cell.BorderRight(0.5f);
 
-            return cell;
+            cell = cell.BorderColor(Colors.Black);
+
+            return cell
+                .PaddingVertical(3)
+                .PaddingHorizontal(4);
         }
 
         private static IContainer HeaderCell(IContainer container)
