@@ -105,11 +105,11 @@ namespace LotCatalogFunction.Services
 
                 if (rule == null)
                 {
-                    _logger.LogWarning("Skipping group: Missing size rule for {Gender}/{Size}",
+                    _logger.LogWarning("Skipping group: Missing LotSizeRule for {Gender}/{Size}",
                         representative.Gender, representative.Size);
 
                     result.SkippedGroups.Add(
-                        CreateSkippedGroup(runId, "Missing size rule", representative, groupBoxes, showlots.Count)
+                        CreateSkippedGroup(runId, "Missing LotSizeRule", representative, groupBoxes, showlots.Count)
                     );
 
                     continue;
